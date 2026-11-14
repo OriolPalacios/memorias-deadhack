@@ -14,3 +14,9 @@ Lee primero `memorias/README.md`, `memorias/CONTEXTO.md`, `memorias/PROTOCOLO.md
 10. Al terminar deja un handoff claro según `memorias/HANDOFFS/PLANTILLA.md`. Un humano revisa antes de merge.
 
 Si faltan Issue, contrato, fuente o requisitos, identifica el bloqueo y solicita una decisión en lugar de establecerla silenciosamente.
+
+## Harness del MVP
+
+Después de la lectura de memoria y del Issue, consulta `harness/README.md`, `harness/agents.json` y `docs/SPEC.md`. El spec es un **borrador** hasta su aceptación; no lo presentes como contrato congelado. Los roles/modelos pedidos por el usuario se registran en `harness/agents.json`; los agentes externos siguen el mismo protocolo de Issues/ramas/PRs y entregan evidencia portable.
+
+Las skills locales están en `harness/skills/`; leer su `SKILL.md` al trabajar en su ámbito, aunque el entorno no tenga descubrimiento automático. El harness y los documentos del producto viven fuera de `memorias/`. Su estructura no se modifica desde una tarea de producto salvo alcance explícito en el Issue.
