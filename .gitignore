@@ -1,0 +1,32 @@
+# Credenciales
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials.json
+service-account*.json
+
+# Dependencias y resultados locales
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+dist/
+build/
+coverage/
+.DS_Store
+
+# Datos planetarios pesados: versionar manifiestos, scripts y pequeñas muestras autorizadas
+data/raw/
+data/processed/
+*.tif
+*.tiff
+*.img
+*.cub
+*.nc
+*.h5
+*.hdf5
+*.parquet
