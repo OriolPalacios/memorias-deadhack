@@ -30,3 +30,7 @@ data/processed/
 *.h5
 *.hdf5
 *.parquet
+
+
+# esto es para mi
+./.sol-orchestrator/
