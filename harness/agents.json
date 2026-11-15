@@ -6,12 +6,12 @@
   "team_assignments_file": "harness/team.json",
   "spec": {
     "path": "docs/SPEC.md",
-    "revision": "0.2",
+    "revision": "0.3",
     "status": "draft",
     "implementation_enabled": false
   },
   "demo": {
-    "deadline": "2026-11-15T10:00:00-05:00",
+    "deadline": "2026-11-15T22:00:00-05:00",
     "timezone": "America/Lima",
     "human_team_size": 3,
     "terrain_3d_required": true

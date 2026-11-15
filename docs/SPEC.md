@@ -1,8 +1,8 @@
 # DeadHack MVP — Una parada más
 
-**Revisión:** 0.2 · **Estado:** borrador para revisión humana · **Fecha:** 2026-11-14.
+**Revisión:** 0.3 · **Estado:** borrador para revisión humana · **Fecha:** 2026-11-15.
 **Tarea de definición:** [Issue #2](https://github.com/OriolPalacios/memorias-deadhack/issues/2).
-**Demo:** 2026-11-15, 10:00, `America/Lima` (UTC−05:00). Equipo: 3 personas.
+**Demo:** 2026-11-15, 22:00, `America/Lima` (UTC−05:00). Equipo: 3 personas.
 
 Los requisitos confirmados en conversación se identifican en [DECISIONS.md](DECISIONS.md). Esta revisión todavía no es un contrato de ejecución aceptado. La aprobación duradera y la integración siguen [el protocolo compartido](../memorias/PROTOCOLO.md).
 
@@ -36,6 +36,7 @@ Interfaz propuesta: español, escritorio y navegador Chrome reciente. Un panel H
 | MVP-08 | Reiniciar restablece ruta, fase, autonomía y observaciones del escenario. El flujo principal funciona con recursos locales servidos por la app, sin consultas a NASA durante la demo. |
 | MVP-09 | Faltantes de elevación, textura o tiempos se comunican. Sin WebGL se muestra una explicación y la información textual; ese fallback no cuenta como aceptación del terreno 3D. |
 | MVP-10 | La evidencia de QA identifica revisión/commit candidato, navegador, pasos, resultados y capturas reales del terreno y de la decisión; se valida la versión que se va a presentar. |
+| MVP-11 | Una capa térmica se puede activar sobre el terreno, ajustar en opacidad y desactivar sin cambiar rutas ni autonomía. Tiene fuente/producto, leyenda, cobertura, resolución y contexto de adquisición disponible. Se identifica si el producto es diurno/nocturno o un mosaico; no se presenta como temperatura actual de la astronauta. La inclusión fue solicitada por el usuario; el producto exacto sigue en el frente de datos. |
 
 ## Modelo mínimo de autonomía
 
@@ -98,7 +99,7 @@ Nunca se asigna una cifra a la opción desconocida. Esta precedencia resuelve ta
 
 ## Alcance para mañana
 
-Incluye una escena pequeña, una malla preparada previamente, dos rutas de escenario, dos alternativas en el punto de decisión, foto/contexto científico, fuentes, reinicio y QA del flujo completo. El copiloto propuesto es una recomendación determinista con explicación; no necesita una llamada a un LLM durante la demo.
+Incluye una escena pequeña, una malla preparada previamente, dos rutas de escenario, dos alternativas en el punto de decisión, foto/contexto científico, capa térmica, fuentes, reinicio y QA del flujo completo. El usuario confirmó recomendaciones deterministas explicadas, sin chat libre; no se necesita una llamada a un LLM durante la demo. La ortoimagen orbital y una superposición geológica son adicionales si los productos están preparados; la ficha histórica MEDA permanece como contexto.
 
 Se difieren globo planetario, rutas dibujadas libremente, búsqueda automática de caminos, física de trajes, multijugador, cuentas, backend, chat abierto, VR/AR y navegación en primera persona. La cámara orbital satisface la interacción 3D inicial. Cambiar estos límites exige revisar tiempo y contrato.
 
@@ -110,4 +111,4 @@ La posición, base, rutas, segunda parada y autonomía son simuladas. Las observ
 
 ## Condición para iniciar implementación
 
-Aceptar esta revisión y la recomendación de arquitectura; resolver los contratos mínimos del [plan de entrega](DELIVERY.md): recorte/DTM con cobertura, georreferenciación, tiempos de ambas rutas y responsables. Cada tarea de código se congela en su Issue y contrato, identificando la revisión aceptada. Se pueden realizar antes consultas de Ground de solo lectura para resolver los datos pendientes.
+Aceptar esta revisión y la recomendación de arquitectura; resolver los contratos mínimos del [plan de entrega](DELIVERY.md): recorte/DTM con cobertura, georreferenciación, capa térmica y geometrías de ambas rutas. Lucian atiende datos y revisión de contratos en [Issue #6](https://github.com/OriolPalacios/memorias-deadhack/issues/6). Cada tarea de código se congela en su Issue y contrato, identificando la revisión aceptada. Se pueden realizar antes consultas de Ground de solo lectura para resolver los datos pendientes.

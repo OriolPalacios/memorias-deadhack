@@ -2,6 +2,8 @@
 
 **Estado:** propuesta de Sol para revisión; no hay aplicación implementada ni dependencias instaladas por este cambio.
 
+**Actualización 15-11:** demo a las 22:00, Perú. El usuario confirmó recomendaciones explicadas sin chat libre e inclusión de una capa térmica. Lucian atiende datos y revisión de contratos en [Issue #6](https://github.com/OriolPalacios/memorias-deadhack/issues/6); estas decisiones de producto no declaran que los assets ya estén preparados.
+
 ## Recomendación
 
 Una SPA con **React + TypeScript + Vite + Three.js mediante React Three Fiber**. Drei se usa solo para utilidades concretas de cámara/controles si reduce trabajo. CSS para paneles; lógica de autonomía en funciones TypeScript puras; datos de escenario y assets estáticos locales. Vitest para reglas/contratos y Playwright o computer use de Terra para el recorrido en Chrome.
@@ -16,6 +18,15 @@ React Three Fiber es un renderer de Three.js para React; su [documentación de i
 | Visor cartográfico 2D | Simplifica navegación de capas, pero no satisface el requisito 3D elegido por el usuario. | Solo posible vista auxiliar futura. |
 
 La elección es una evaluación de alcance/plazo, no un benchmark realizado. No se ha verificado todavía el rendimiento de una malla real en el equipo de demo.
+
+## Capas y responsabilidad de la aplicación
+
+- El DTM determina la geometría del terreno. Las capas óptica y térmica se representan sobre esa misma geometría con un selector y opacidad; cambiar una capa no altera la elevación ni la evaluación de autonomía.
+- La térmica forma parte del MVP. La ortoimagen y la superposición geológica son adicionales según disponibilidad; la foto de superficie aparece en la parada científica y MEDA en una ficha histórica.
+- Lucian define el producto y cómo expresarlo en los contratos de datos: cobertura, resolución nativa, referencia espacial, archivo preparado, leyenda/unidades y contexto temporal. La app debe poder distinguir un asset ausente de una zona sin cobertura; no deduce grados Celsius de colores sin una calibración explícita del producto.
+- Preparar recorte/alineación antes de servir los assets. La app consume el resultado y muestra las limitaciones; este documento no fija una serialización nueva por encima del trabajo de contratos de #6.
+
+Queda por confirmar la base técnica recomendada y el destino de publicación. Estado de misión mediante eventos y un reducer de React es suficiente como propuesta inicial; no hace falta una plataforma de agentes en el runtime del producto. Los agentes del harness trabajan durante el desarrollo.
 
 ## Separación mínima
 

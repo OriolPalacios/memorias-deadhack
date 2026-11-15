@@ -15,7 +15,7 @@ Este harness reúne **instrucciones, perfiles de modelos, skills y contratos por
 | Recurso | Propósito |
 |---|---|
 | [agents.json](agents.json) | Perfiles pedidos por el usuario y límites de orquestación. Es declarativo; no es configuración reconocida automáticamente por Codex/AGY. |
-| [team.json](team.json) | Asignación humana editable por frente. Por ahora Oriol opera todos los frentes; el estado y dueño efectivos de cada tarea se confirman en su Issue. |
+| [team.json](team.json) | Asignación humana editable por frente. Lucian atiende datos y contratos (#6); Oriol, experiencia, dominio y demo. El estado efectivo se confirma en cada Issue. |
 | [ROLES.md](ROLES.md) | Contratos de responsabilidad y prompts breves de arranque. |
 | [SKILLS.md](SKILLS.md) | Skills requeridas, condicionales y sus ubicaciones. |
 | [WORKFLOWS.md](WORKFLOWS.md) | Planning, Ground, implementación, QA, corrección y handoff externo. |
@@ -30,5 +30,7 @@ Este harness reúne **instrucciones, perfiles de modelos, skills y contratos por
 `.sol-orchestrator/` contiene estado local, preguntas de Ground y logs sin versionar. No es memoria compartida ni fuente de estado de tareas. Al entregar, trasladar solo conclusiones, referencias y evidencia relevante al Issue/PR o al handoff establecido; no subir logs completos, conversaciones o rutas privadas de otra persona.
 
 Para repartir trabajo, añadir el operador a `team.json.operators`, incluirlo en `current_operator_ids` cuando esté activo y actualizar `owner_operator_id` en los frentes correspondientes; los IDs de rol de agente se resuelven contra `agents.json`. Después actualizar/adquirir los Issues afectados: editar el JSON no reasigna automáticamente tareas ni concede permisos de publicación.
+
+Los perfiles de implementación/QA del JSON son los valores por defecto del orquestador. Una tarea externa activa puede declarar su runtime/modelo efectivo por separado; `null` significa que no está registrado. El trabajo de Ground/revisión de Lucian con Codex en #6 no se atribuye a Gemini.
 
 No se cambia la estructura de `memorias/` desde este Issue. Cuando haya que actualizar una decisión duradera o su índice de contratos, el coordinador prepara un cambio acotado según su protocolo. Los handoffs normales pueden incluirse en el PR sin abrir un archivo adicional.

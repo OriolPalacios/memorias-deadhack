@@ -19,6 +19,7 @@
 | QA-11 · Usabilidad real | MVP-10 | En Chrome del equipo de demo, controles HTML accesibles, texto legible, cámara recuperable, sin errores de consola que rompan el flujo. Registrar navegador/viewport y tiempos observados. |
 | QA-12 · Precedencia | MVP-05/06 | Con 65 disponibles y reserva 20, directa 50 frente a extra 5+30 recomienda extra (30 frente a 15). Si extra cumple y directa es desconocida, solo la extra lleva cifra y se recomienda. Si directa cumple y extra es desconocida, se recomienda regresar con incertidumbre visible. |
 | QA-13 · Segunda ruta | MVP-02/05 | Ruta B consume 45+20 antes de decidir: quedan 55; directa deja 25 y extra 5. Total principal 95, recomendación regresar. |
+| QA-14 · Capa térmica | MVP-11 | Activar, variar opacidad y desactivar la capa mantiene geometría/ruta/autonomía. Comprobar registro con el recorte y metadatos/leyenda del producto; un mosaico IR no se rotula como temperatura actual. NoData y cobertura parcial se distinguen de valores científicos. |
 
 Pruebas unitarias del dominio deben cubrir fronteras, ausentes y transiciones, no replicar la implementación. La inspección visual y la prueba de registro espacial requieren evidencia propia: tests unitarios verdes no las sustituyen.
 

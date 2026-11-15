@@ -13,7 +13,7 @@ Repositorio compartido del equipo DeadHack para **Interplanetary Survival Guide:
 
 Copiloto para preparar una caminata en Jezero, explorar un terreno 3D y decidir si una parada científica adicional conserva el margen de regreso.
 
-**Demo:** 15 de noviembre de 2026, 10:00 a. m., Perú (`America/Lima`, UTC−05:00). Equipo: 3 personas.
+**Demo:** 15 de noviembre de 2026, 10:00 p. m., Perú (`America/Lima`, UTC−05:00). Equipo: 3 personas.
 
 - [Spec y criterios de aceptación](docs/SPEC.md): borrador para revisión, todavía sin implementación.
 - [Arquitectura y evaluación de Three.js](docs/ARCHITECTURE.md).
@@ -21,7 +21,7 @@ Copiloto para preparar una caminata en Jezero, explorar un terreno 3D y decidir 
 - [Decisiones y preguntas abiertas](docs/DECISIONS.md).
 - [Plan de trabajo hasta la demo](docs/DELIVERY.md).
 - [Harness: agentes, skills, workflows y arranque](harness/README.md).
-- [Asignación humana editable](harness/team.json): por ahora todos los frentes a cargo de Oriol.
+- [Asignación humana editable](harness/team.json): Lucian atiende datos y contratos; Oriol, experiencia, dominio y demo.
 
 El harness complementa el protocolo de `memorias/`; GitHub Issues y PRs conservan la autoridad sobre tareas, propietarios y estado. Trabajo de definición: [Issue #2](https://github.com/OriolPalacios/memorias-deadhack/issues/2).
 

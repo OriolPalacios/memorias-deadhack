@@ -2,6 +2,8 @@
 
 **Actualizado:** 2026-11-14. Los cinco enlaces del primer bloque fueron facilitados directamente por el usuario. Abrir una página confirma la referencia, no que los datasets se hayan descargado, alineado o integrado.
 
+**Actualización 15-11:** el usuario solicita incluir térmica en el MVP; Lucian atiende datos y contratos en #6. La inclusión como requisito no significa que un producto térmico concreto esté ya preparado.
+
 ## Catálogo entregado por el reto
 
 | ID | Recurso | Uso previsto en el MVP |
@@ -24,6 +26,7 @@ Los recursos de referencia visual no se presentan como datasets consumidos. En l
 | D-04 | [Primer informe MEDA de Jezero](https://www.jpl.nasa.gov/news/nasas-first-weather-report-from-jezero-crater-on-mars/) | Referencia histórica: 718 Pa en febrero de 2021; el 3–4 de abril de 2021 se informaron temperaturas entre −83 y −22 °C y ráfagas de alrededor de 10 m/s. Fechas distintas; contexto informativo, sin efecto automático sobre la ruta. |
 | D-05 | [Curiosity RAD — Radiation Measurements on Mars](https://science.nasa.gov/resource/radiation-measurements-on-mars/) | Observaciones de agosto de 2012 a junio de 2013 en Gale; unos 210 µGy/día de dosis absorbida medida por el instrumento. No es dosis personal de una astronauta ni previsión en Jezero. Referencia opcional, fuera del cálculo de autonomía. |
 | D-06 | [Mars Trek WMTS API](https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars) | Documenta consulta de `GetCapabilities`, matrices y cobertura de tiles. Las teselas de imagen no proporcionan alturas numéricas por sí solas; revisar producto y proyección. |
+| D-07 | [ASU — Mars Global Data Sets / THEMIS](https://mars.asu.edu/data/) | Catálogo consultado el 15-11: ofrece mosaicos IR THEMIS diurnos/nocturnos a 100 m por píxel, entre otros productos. Es candidato para la capa térmica; no se descargó ni se verificó su recorte/alineación para esta app. Su resolución es distinta de la de un DTM HiRISE: no inferir detalle térmico peatonal ni grados Celsius de colores. Producto, unidades y contexto temporal exactos quedan por documentar. |
 
 HiRISE es una vía complementaria de producto de misión NASA para obtener elevación numérica, no un sexto recurso atribuido al listado del usuario. Si el producto elegido se encuentra a través de Trek/USGS, guardar también esa relación de descubrimiento.
 
