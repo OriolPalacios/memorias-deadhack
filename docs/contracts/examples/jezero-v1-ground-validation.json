@@ -1,0 +1,250 @@
+{
+  "geometryVersion": "jezero-geometry-proposal-20261115-1",
+  "geometryInputSha256": "31a6f3eca1d1f46388008751eb93836a4fcdf1204b37cc4bd821914020fefa73",
+  "source": {
+    "productId": "DTEEC_002387_1985_003798_1985_A01",
+    "url": "https://www.uahirise.org/PDS/DTM/PSP/ORB_002300_002399/PSP_002387_1985_PSP_003798_1985/DTEEC_002387_1985_003798_1985_A01.IMG",
+    "format": "PDS3 PC_REAL Float32 little-endian",
+    "nativeResolutionMpp": 1.0096476466229,
+    "nativeShape": [
+      11538,
+      6934
+    ],
+    "labelSha256": "3569808f0538208a4bac4ce1960f165974417b572223c3db3bc0e71e11ea973b",
+    "rangedBytes": [
+      216257592,
+      227268783
+    ],
+    "rangeSha256": "eb677c4335bac2d71a6cadad4260da260952c260021f5aa482d3c09d8dbbec95",
+    "nativePixelWindow": [
+      3027,
+      7796,
+      3430,
+      8192
+    ],
+    "nativeValid": 160388,
+    "nativeTotal": 160388,
+    "projection": {
+      "type": "spherical eqc",
+      "radiusM": 3394839.8133163,
+      "lon0": 77.41,
+      "latTs": 15.0,
+      "latitudeType": "planetocentric",
+      "longitudeDomain": "0_to_360_east"
+    },
+    "verticalDatum": "Mars areoid adjusted to MOLA, preserved from the HiRISE DTM",
+    "unit": "m",
+    "valueScale": 1.0,
+    "valueOffset": 0.0,
+    "missingBits": "0xFF7FFFFB"
+  },
+  "extentM": [
+    -150,
+    -50,
+    250,
+    350
+  ],
+  "grid": [
+    256,
+    256
+  ],
+  "derivedSpacingM": [
+    1.5625,
+    1.5625
+  ],
+  "derivedValid": 65536,
+  "derivedTotal": 65536,
+  "heightRangeM": [
+    -2536.40673828125,
+    -2457.3974609375
+  ],
+  "meshBoundsXzM": [
+    -149.21875,
+    -349.21875,
+    249.21875,
+    49.21875
+  ],
+  "corridorRadiusM": 5,
+  "coverageMethod": "Verified coverage requires valid native cells across the rectangle and finite valid vertices after nearest-neighbour cell-centre reprojection. The agreed-radius corridor must stay inside the convex hull of the mesh cell centres.",
+  "controls": [
+    {
+      "id": "Mageik",
+      "lonLat": [
+        77.40143554,
+        18.45068664
+      ],
+      "xzM": [
+        80.718,
+        -40.7
+      ],
+      "horizontalErrorM": 0.000605,
+      "nativeColRow": [
+        3260,
+        8102
+      ],
+      "nativeHeightM": -2520.682373046875,
+      "derivedColRow": [
+        147,
+        197
+      ],
+      "derivedHeightM": -2520.68359375
+    },
+    {
+      "id": "Kukaklek",
+      "lonLat": [
+        77.39911421,
+        18.45363597
+      ],
+      "xzM": [
+        -49.806,
+        -215.521
+      ],
+      "horizontalErrorM": 0.000192,
+      "nativeColRow": [
+        3128,
+        7929
+      ],
+      "nativeHeightM": -2508.43310546875,
+      "derivedColRow": [
+        64,
+        86
+      ],
+      "derivedHeightM": -2508.479736328125
+    }
+  ],
+  "movements": [
+    {
+      "eventId": "a_outbound",
+      "lengthM": 269.184926,
+      "maxEndpointErrorM": 0.0,
+      "corridorMarginToMeshM": 44.21875,
+      "coverageVerified": true
+    },
+    {
+      "eventId": "b_outbound",
+      "lengthM": 501.993491,
+      "maxEndpointErrorM": 0.0,
+      "corridorMarginToMeshM": 44.21875,
+      "coverageVerified": true
+    },
+    {
+      "eventId": "reach_and_observe_extra",
+      "lengthM": 218.268197,
+      "maxEndpointErrorM": 0.0,
+      "corridorMarginToMeshM": 84.91875,
+      "coverageVerified": true
+    },
+    {
+      "eventId": "return_after_extra",
+      "lengthM": 55.844956,
+      "maxEndpointErrorM": 0.0,
+      "corridorMarginToMeshM": 44.21875,
+      "coverageVerified": true
+    },
+    {
+      "eventId": "return_direct",
+      "lengthM": 292.128515,
+      "maxEndpointErrorM": 0.0,
+      "corridorMarginToMeshM": 44.21875,
+      "coverageVerified": true
+    }
+  ],
+  "geometryIssueComment": "https://github.com/OriolPalacios/memorias-deadhack/pull/10#issuecomment-6901693527",
+  "formatIssueComment": "https://github.com/OriolPalacios/memorias-deadhack/pull/10#issuecomment-6902087995",
+  "thermalSummary": {
+    "sourcePixelWindow": {
+      "firstRow": 6843,
+      "lastRow": 6846,
+      "firstColumn": 19204,
+      "lastColumn": 19207
+    },
+    "sourceRanges": [
+      {
+        "purpose": "Classic TIFF header, GeoTIFF tags and image directory chain",
+        "start": 0,
+        "stopInclusive": 2041,
+        "byteLength": 2042,
+        "sha256": "abd05bcd6e86beb03c18dad0b6e393c811b2aa6b4e98f13d1fea6c99d49315fb",
+        "httpDate": "Sun, 15 Nov 2026 22:28:15 GMT"
+      },
+      {
+        "purpose": "Tile 726 offset",
+        "start": 4946,
+        "stopInclusive": 4949,
+        "byteLength": 4,
+        "sha256": "1c8a805c45e59589f789a97db5adbc19c38cc977f73c9a4a14667f95b402fc19",
+        "httpDate": "Sun, 15 Nov 2026 22:28:22 GMT"
+      },
+      {
+        "purpose": "Tile 726 compressed size",
+        "start": 12366,
+        "stopInclusive": 12369,
+        "byteLength": 4,
+        "sha256": "d3037e9b2c3ce74e7c8e01da921ab826dd7e9eb1dd2405c591000150657b43c6",
+        "httpDate": "Sun, 15 Nov 2026 22:28:30 GMT"
+      },
+      {
+        "purpose": "Tile 726 compressed data, COG leader and trailer",
+        "start": 255652199,
+        "stopInclusive": 255854878,
+        "byteLength": 202680,
+        "sha256": "466849254f708b3a302dfceac50653029a2b60f54342e3bdd05b37f86cd5dd75",
+        "httpDate": "Sun, 15 Nov 2026 22:28:37 GMT"
+      }
+    ],
+    "dnNorthToSouth": [
+      [
+        102,
+        87,
+        85,
+        86
+      ],
+      [
+        112,
+        101,
+        105,
+        98
+      ],
+      [
+        112,
+        115,
+        113,
+        99
+      ],
+      [
+        124,
+        119,
+        110,
+        92
+      ]
+    ],
+    "alphaNorthToSouth": [
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ]
+    ],
+    "maxSourceCenterDistanceM": 50.63914115749501
+  },
+  "semantics": "Coverage of simulated geometry on source elevations and derived mesh. No EVA safety conclusion."
+}

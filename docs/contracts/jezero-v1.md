@@ -1,6 +1,6 @@
 # Contratos de datos de Jezero
 
-**Estado: propuesta de formato para revisión de Lucian y el consumidor.** Aplica al [Issue #8](https://github.com/OriolPalacios/memorias-deadhack/issues/8) y parte de [main 895e5e5](https://github.com/OriolPalacios/memorias-deadhack/tree/895e5e5067332ad802a809360c1d4dd883f583aa), que integra el spec 0.3 aprobado en [PR #3](https://github.com/OriolPalacios/memorias-deadhack/pull/3). Las convenciones acordadas de `evaluation/v1` figuran abajo. El formato del paquete queda pendiente de acuerdo productor/consumidor y la cobertura final depende de las geometrías versionadas de Oriol.
+**Estado.** Oriol confirmó los formatos de carga, el marco y la geometría de la demo. El paquete procesado de la Issue #8 se entrega para que el frente de la Issue #9 lo pruebe con su app. Los códigos de evaluación por opción y su envoltorio externo continúan propuestos. [Formato confirmado](https://github.com/OriolPalacios/memorias-deadhack/pull/10#issuecomment-6902087995) · [Relevo de integración](issue-8-handoff.md)
 
 ## Intercambio local
 
@@ -11,7 +11,7 @@ Lucian prepara los datos y el manifiesto `terrain.json`. Oriol aporta la geometr
 | Punto de conexión de la app | Insumo disponible para avanzar |
 |---|---|
 | Duraciones y evaluación de autonomía | `route-a` y `route-b` se pueden ejecutar en el dominio puro con los tiempos simulados de spec 0.3. La selección A/B por tiempos puede probarse durante la planificación mientras la geometría figure como pendiente. [Nueve casos de evaluación](examples/evaluation-v1-casos.json) |
-| Carga de terreno, rutas y capas | Los ejemplos sintéticos sirven para revisar el punto de conexión. `terrain/v1` y `scenario/v1` siguen propuestos. El DEM, la térmica y la foto tienen cada uno su estado explícito de disponibilidad en la app. Una fuente localizada o un recorte preliminar todavía requiere una integración para estar disponible allí. |
+| Carga de terreno, rutas y capas | Los ejemplos sintéticos prueban las interfaces. El paquete con datos procesados comienza en `demo/jezero/terrain.json`. El visor presenta la disponibilidad de terreno, térmica y foto por separado. |
 
 El frente de la app implementa sus puntos de conexión en `src/**` y los verifica en `tests/**`. `docs/contracts/**`, `scripts/data/**` y `public/demo/jezero/**` corresponden al frente de datos. [Issue #9](https://github.com/OriolPalacios/memorias-deadhack/issues/9)
 
@@ -193,7 +193,7 @@ Están acordados `extra`, `direct`, `projectedAtBaseMin` y `reasonCode` conjunto
 3. Elegir el rectángulo de bordes y dos dimensiones de rejilla en el CRS de destino. Mantener versiones y parámetros de GDAL/PROJ. Patrón propuesto `gdalwarp -s_srs <CRS-origen-verificado> -t_srs <CRS-marco> -te W S Emax Nmax -ts ANCHO ALTO -r near -ovr NONE -et 0 -novshift -dstalpha <origen> <recorte.tif>`. Si el driver oculta NoData, convertirlo a máscara antes de reproyectar. Aplicar escala y offset originales una sola vez a las alturas válidas al exportarlas a Float32. Empaquetar alturas/máscara en el orden definido. Para el PNG térmico replicar el DN válido en RGB y trasladar cobertura al alfa. [Reproyección GDAL](https://gdal.org/en/stable/programs/gdalwarp.html)
 4. Con las trazas versionadas, rasterizar el buffer acordado en el CRS del DTM. Contar celdas interceptadas válidas y totales, incluidas las celdas fuera del footprint como faltantes. Verificar continuidad sobre la malla exportada y registrar los tramos con huecos. La cobertura de un recorte preliminar de los controles solo corresponde a su propia extensión.
 
-La transformación completa queda pendiente del acuerdo de formato y de un entorno con GDAL/PROJ.
+La entrega aplica las ecuaciones EQC esféricas y reproyección por centros con vecino más próximo. Los scripts reproducibles y la evidencia documentan el método usado en esta versión. [Reproducción](../../scripts/data/README.md) · [Validación de Jezero](examples/jezero-v1-ground-validation.json)
 
 ## Verificación reproducible
 
@@ -210,8 +210,6 @@ La comprobación documental verificó tres JSON, cuatro binarios, tamaños y has
 | Paquete servido | Cargar desde la app con solicitudes de datos externas bloqueadas, verificar cámara, leyenda, fuente, capa térmica y diferencia entre asset faltante y píxel transparente. Medir tamaño con objetivo aproximado ≤15 MB. |
 | Corredores | Validar base, paradas, trazas A/B y ambos regresos sobre máscara y malla, registrando revisión, proporción válida y huecos. |
 
-## Respuesta de Oriol y del consumidor
+## Prueba de integración
 
-- Confirmar o proponer cambios concretos a Float32 little-endian, máscara Uint8, PNG térmico RGBA, CRS local marciano, origen, extensión y dimensiones/espaciado de las rejillas.
-- Aportar base, paradas y polilíneas A/B por fase, con ambos regresos, versión o commit y su marco de coordenadas. Acordar con Lucian el ancho de corredor y la tolerancia de registro para verificar la cobertura.
-- Confirmar el envoltorio y los códigos por opción de `evaluation/v1` sobre los nueve casos. Los campos y códigos conjuntos ya acordados constan en la arquitectura. [Issue #8](https://github.com/OriolPalacios/memorias-deadhack/issues/8) · [Plan QA](https://github.com/OriolPalacios/memorias-deadhack/blob/895e5e5067332ad802a809360c1d4dd883f583aa/docs/QA.md)
+Cargar el manifiesto con el candidato de la Issue #9 y verificar los cinco recorridos simulados sobre la malla y el registro de la capa THEMIS. Registrar la prueba de la app y el tamaño de todo el `dist` en la misma revisión. [Relevo de integración](issue-8-handoff.md) · [Plan QA](../QA.md)

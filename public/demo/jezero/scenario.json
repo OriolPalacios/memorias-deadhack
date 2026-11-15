@@ -1,0 +1,211 @@
+{
+  "contract": "scenario/v1",
+  "id": "una-parada-mas-jezero-v1",
+  "terrainId": "jezero-dem-20261115-v1",
+  "frameId": "mars-eqc-jezero-v1",
+  "geometryVersion": "jezero-geometry-proposal-20261115-1",
+  "budgetMin": 120,
+  "reserveMin": 20,
+  "base": {
+    "id": "base",
+    "xzM": [
+      -100,
+      -240
+    ],
+    "simulated": true
+  },
+  "stops": [
+    {
+      "id": "science",
+      "xzM": [
+        80.718,
+        -40.7
+      ],
+      "simulated": true,
+      "anchorControl": "Mageik",
+      "anchorLonLat": [
+        77.40143554,
+        18.45068664
+      ],
+      "evidenceId": "science-photo",
+      "contextIds": [
+        "meda-pressure"
+      ]
+    },
+    {
+      "id": "extra-stop",
+      "xzM": [
+        -49.806,
+        -215.521
+      ],
+      "simulated": true,
+      "anchorControl": "Kukaklek",
+      "anchorLonLat": [
+        77.39911421,
+        18.45363597
+      ],
+      "evidenceId": null,
+      "contextIds": []
+    }
+  ],
+  "routes": [
+    {
+      "id": "A",
+      "simulated": true,
+      "outbound": {
+        "eventId": "a_outbound",
+        "minutes": 35,
+        "fromId": "base",
+        "toId": "science",
+        "pathXzM": [
+          [
+            -100,
+            -240
+          ],
+          [
+            -40,
+            -180
+          ],
+          [
+            20,
+            -110
+          ],
+          [
+            80.718,
+            -40.7
+          ]
+        ]
+      }
+    },
+    {
+      "id": "B",
+      "simulated": true,
+      "outbound": {
+        "eventId": "b_outbound",
+        "minutes": 45,
+        "fromId": "base",
+        "toId": "science",
+        "pathXzM": [
+          [
+            -100,
+            -240
+          ],
+          [
+            150,
+            -260
+          ],
+          [
+            150,
+            -100
+          ],
+          [
+            80.718,
+            -40.7
+          ]
+        ]
+      }
+    }
+  ],
+  "shared": {
+    "observe": {
+      "eventId": "observe_science",
+      "minutes": 20,
+      "stopId": "science"
+    },
+    "extra": {
+      "eventId": "reach_and_observe_extra",
+      "minutes": 15,
+      "fromId": "science",
+      "toId": "extra-stop",
+      "pathXzM": [
+        [
+          80.718,
+          -40.7
+        ],
+        [
+          10,
+          -130
+        ],
+        [
+          -49.806,
+          -215.521
+        ]
+      ]
+    },
+    "returnAfterExtra": {
+      "eventId": "return_after_extra",
+      "minutes": 35,
+      "fromId": "extra-stop",
+      "toId": "base",
+      "pathXzM": [
+        [
+          -49.806,
+          -215.521
+        ],
+        [
+          -100,
+          -240
+        ]
+      ]
+    },
+    "direct": {
+      "eventId": "return_direct",
+      "minutes": 30,
+      "fromId": "science",
+      "toId": "base",
+      "pathXzM": [
+        [
+          80.718,
+          -40.7
+        ],
+        [
+          -30,
+          -80
+        ],
+        [
+          -100,
+          -240
+        ]
+      ]
+    }
+  },
+  "evidence": [
+    {
+      "id": "science-photo",
+      "kind": "rover-image",
+      "productId": "PIA25325",
+      "asset": {
+        "path": "pia25325.jpg",
+        "format": "jpeg",
+        "byteLength": 312298,
+        "sha256": "7d9bac0fe7195a89ea05cf42876a40ed45b2dcb698f4f9cd8582aafbd7e27ac9"
+      },
+      "credit": "NASA/JPL-Caltech",
+      "captureDate": "2022-04-30",
+      "captureSol": 424,
+      "captureLocation": null,
+      "sourceUrl": "https://www.jpl.nasa.gov/images/pia25325-enchanted-view-of-jezero-rocks/",
+      "missingReason": "exact_capture_location_unverified",
+      "note": "Mageik sitúa la parada simulada. La ubicación exacta de la Hazcam sigue pendiente de verificar."
+    }
+  ],
+  "contextCards": [
+    {
+      "id": "meda-pressure",
+      "kind": "historical-observation",
+      "site": "Cráter Jezero, Marte",
+      "dateUtc": null,
+      "dateLabel": "19 de febrero de 2021 según JPL",
+      "sol": null,
+      "credit": "NASA/JPL-Caltech · Perseverance MEDA",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-first-weather-report-from-jezero-crater-on-mars/",
+      "variables": [
+        {
+          "name": "presión atmosférica",
+          "value": 718,
+          "unit": "Pa"
+        }
+      ]
+    }
+  ]
+}
