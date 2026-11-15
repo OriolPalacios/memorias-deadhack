@@ -1,0 +1,370 @@
+{
+  "contract": "evaluation/v1",
+  "status": "proposed-fixtures",
+  "phase": "post_observation",
+  "unit": "min",
+  "reference": "https://github.com/OriolPalacios/memorias-deadhack/blob/8b9edc4e42776e3f709a7d15ee3e7d30a7f1cd00/docs/SPEC.md",
+  "note": "Variables de entrada y nombres del mensaje son propuestas para el intercambio dominio → visor. Los estados y las razones insufficient_data/reserve_unmet provienen del spec. Las demás etiquetas de razón e IDs requieren acuerdo. Costes simulados.",
+  "cases": [
+    {
+      "id": "route-a",
+      "qa": "QA-04",
+      "given": {
+        "availableMin": 65,
+        "reserveMin": 20,
+        "pendingCostMinByOptionId": {
+          "extra": 50,
+          "direct": 30
+        }
+      },
+      "expected": {
+        "options": [
+          {
+            "optionId": "extra",
+            "pendingCostMin": 50,
+            "projectedAtBaseMin": 15,
+            "reserveMin": 20,
+            "reserveDeltaMin": -5,
+            "reserveDeficitMin": 5,
+            "budgetDeficitMin": 0,
+            "status": "below_reserve",
+            "reasonCode": "reserve_shortfall"
+          },
+          {
+            "optionId": "direct",
+            "pendingCostMin": 30,
+            "projectedAtBaseMin": 35,
+            "reserveMin": 20,
+            "reserveDeltaMin": 15,
+            "reserveDeficitMin": 0,
+            "budgetDeficitMin": 0,
+            "status": "meets_reserve",
+            "reasonCode": "reserve_met"
+          }
+        ],
+        "recommendedOptionId": "direct",
+        "reasonCode": "direct_meets_reserve"
+      }
+    },
+    {
+      "id": "route-b",
+      "qa": "QA-13",
+      "given": {
+        "availableMin": 55,
+        "reserveMin": 20,
+        "pendingCostMinByOptionId": {
+          "extra": 50,
+          "direct": 30
+        }
+      },
+      "expected": {
+        "options": [
+          {
+            "optionId": "extra",
+            "pendingCostMin": 50,
+            "projectedAtBaseMin": 5,
+            "reserveMin": 20,
+            "reserveDeltaMin": -15,
+            "reserveDeficitMin": 15,
+            "budgetDeficitMin": 0,
+            "status": "below_reserve",
+            "reasonCode": "reserve_shortfall"
+          },
+          {
+            "optionId": "direct",
+            "pendingCostMin": 30,
+            "projectedAtBaseMin": 25,
+            "reserveMin": 20,
+            "reserveDeltaMin": 5,
+            "reserveDeficitMin": 0,
+            "budgetDeficitMin": 0,
+            "status": "meets_reserve",
+            "reasonCode": "reserve_met"
+          }
+        ],
+        "recommendedOptionId": "direct",
+        "reasonCode": "direct_meets_reserve"
+      }
+    },
+    {
+      "id": "exact-reserve",
+      "qa": "QA-05",
+      "given": {
+        "availableMin": 65,
+        "reserveMin": 20,
+        "pendingCostMinByOptionId": {
+          "extra": 45,
+          "direct": 30
+        }
+      },
+      "expected": {
+        "options": [
+          {
+            "optionId": "extra",
+            "pendingCostMin": 45,
+            "projectedAtBaseMin": 20,
+            "reserveMin": 20,
+            "reserveDeltaMin": 0,
+            "reserveDeficitMin": 0,
+            "budgetDeficitMin": 0,
+            "status": "meets_reserve",
+            "reasonCode": "reserve_met"
+          },
+          {
+            "optionId": "direct",
+            "pendingCostMin": 30,
+            "projectedAtBaseMin": 35,
+            "reserveMin": 20,
+            "reserveDeltaMin": 15,
+            "reserveDeficitMin": 0,
+            "budgetDeficitMin": 0,
+            "status": "meets_reserve",
+            "reasonCode": "reserve_met"
+          }
+        ],
+        "recommendedOptionId": "extra",
+        "reasonCode": "extra_meets_reserve"
+      }
+    },
+    {
+      "id": "extra-unknown",
+      "qa": "QA-12",
+      "given": {
+        "availableMin": 65,
+        "reserveMin": 20,
+        "pendingCostMinByOptionId": {
+          "extra": null,
+          "direct": 30
+        }
+      },
+      "expected": {
+        "options": [
+          {
+            "optionId": "extra",
+            "pendingCostMin": null,
+            "projectedAtBaseMin": null,
+            "reserveMin": 20,
+            "reserveDeltaMin": null,
+            "reserveDeficitMin": null,
+            "budgetDeficitMin": null,
+            "status": "unknown",
+            "reasonCode": "missing_pending_cost"
+          },
+          {
+            "optionId": "direct",
+            "pendingCostMin": 30,
+            "projectedAtBaseMin": 35,
+            "reserveMin": 20,
+            "reserveDeltaMin": 15,
+            "reserveDeficitMin": 0,
+            "budgetDeficitMin": 0,
+            "status": "meets_reserve",
+            "reasonCode": "reserve_met"
+          }
+        ],
+        "recommendedOptionId": "direct",
+        "reasonCode": "direct_meets_reserve"
+      }
+    },
+    {
+      "id": "direct-unknown",
+      "qa": "QA-12",
+      "given": {
+        "availableMin": 65,
+        "reserveMin": 20,
+        "pendingCostMinByOptionId": {
+          "extra": 35,
+          "direct": null
+        }
+      },
+      "expected": {
+        "options": [
+          {
+            "optionId": "extra",
+            "pendingCostMin": 35,
+            "projectedAtBaseMin": 30,
+            "reserveMin": 20,
+            "reserveDeltaMin": 10,
+            "reserveDeficitMin": 0,
+            "budgetDeficitMin": 0,
+            "status": "meets_reserve",
+            "reasonCode": "reserve_met"
+          },
+          {
+            "optionId": "direct",
+            "pendingCostMin": null,
+            "projectedAtBaseMin": null,
+            "reserveMin": 20,
+            "reserveDeltaMin": null,
+            "reserveDeficitMin": null,
+            "budgetDeficitMin": null,
+            "status": "unknown",
+            "reasonCode": "missing_pending_cost"
+          }
+        ],
+        "recommendedOptionId": "extra",
+        "reasonCode": "extra_meets_reserve"
+      }
+    },
+    {
+      "id": "unknown-without-qualifying-choice",
+      "qa": "QA-05",
+      "given": {
+        "availableMin": 65,
+        "reserveMin": 20,
+        "pendingCostMinByOptionId": {
+          "extra": null,
+          "direct": 47
+        }
+      },
+      "expected": {
+        "options": [
+          {
+            "optionId": "extra",
+            "pendingCostMin": null,
+            "projectedAtBaseMin": null,
+            "reserveMin": 20,
+            "reserveDeltaMin": null,
+            "reserveDeficitMin": null,
+            "budgetDeficitMin": null,
+            "status": "unknown",
+            "reasonCode": "missing_pending_cost"
+          },
+          {
+            "optionId": "direct",
+            "pendingCostMin": 47,
+            "projectedAtBaseMin": 18,
+            "reserveMin": 20,
+            "reserveDeltaMin": -2,
+            "reserveDeficitMin": 2,
+            "budgetDeficitMin": 0,
+            "status": "below_reserve",
+            "reasonCode": "reserve_shortfall"
+          }
+        ],
+        "recommendedOptionId": null,
+        "reasonCode": "insufficient_data"
+      }
+    },
+    {
+      "id": "both-below-reserve",
+      "qa": "QA-06",
+      "given": {
+        "availableMin": 65,
+        "reserveMin": 20,
+        "pendingCostMinByOptionId": {
+          "extra": 46,
+          "direct": 47
+        }
+      },
+      "expected": {
+        "options": [
+          {
+            "optionId": "extra",
+            "pendingCostMin": 46,
+            "projectedAtBaseMin": 19,
+            "reserveMin": 20,
+            "reserveDeltaMin": -1,
+            "reserveDeficitMin": 1,
+            "budgetDeficitMin": 0,
+            "status": "below_reserve",
+            "reasonCode": "reserve_shortfall"
+          },
+          {
+            "optionId": "direct",
+            "pendingCostMin": 47,
+            "projectedAtBaseMin": 18,
+            "reserveMin": 20,
+            "reserveDeltaMin": -2,
+            "reserveDeficitMin": 2,
+            "budgetDeficitMin": 0,
+            "status": "below_reserve",
+            "reasonCode": "reserve_shortfall"
+          }
+        ],
+        "recommendedOptionId": null,
+        "reasonCode": "reserve_unmet"
+      }
+    },
+    {
+      "id": "zero-and-negative",
+      "qa": "QA-05, QA-06",
+      "given": {
+        "availableMin": 65,
+        "reserveMin": 20,
+        "pendingCostMinByOptionId": {
+          "extra": 70,
+          "direct": 65
+        }
+      },
+      "expected": {
+        "options": [
+          {
+            "optionId": "extra",
+            "pendingCostMin": 70,
+            "projectedAtBaseMin": -5,
+            "reserveMin": 20,
+            "reserveDeltaMin": -25,
+            "reserveDeficitMin": 25,
+            "budgetDeficitMin": 5,
+            "status": "exhausted",
+            "reasonCode": "budget_exhausted"
+          },
+          {
+            "optionId": "direct",
+            "pendingCostMin": 65,
+            "projectedAtBaseMin": 0,
+            "reserveMin": 20,
+            "reserveDeltaMin": -20,
+            "reserveDeficitMin": 20,
+            "budgetDeficitMin": 0,
+            "status": "exhausted",
+            "reasonCode": "budget_exhausted"
+          }
+        ],
+        "recommendedOptionId": null,
+        "reasonCode": "reserve_unmet"
+      }
+    },
+    {
+      "id": "nontrivial-precedence",
+      "qa": "QA-12",
+      "given": {
+        "availableMin": 65,
+        "reserveMin": 20,
+        "pendingCostMinByOptionId": {
+          "extra": 35,
+          "direct": 50
+        }
+      },
+      "expected": {
+        "options": [
+          {
+            "optionId": "extra",
+            "pendingCostMin": 35,
+            "projectedAtBaseMin": 30,
+            "reserveMin": 20,
+            "reserveDeltaMin": 10,
+            "reserveDeficitMin": 0,
+            "budgetDeficitMin": 0,
+            "status": "meets_reserve",
+            "reasonCode": "reserve_met"
+          },
+          {
+            "optionId": "direct",
+            "pendingCostMin": 50,
+            "projectedAtBaseMin": 15,
+            "reserveMin": 20,
+            "reserveDeltaMin": -5,
+            "reserveDeficitMin": 5,
+            "budgetDeficitMin": 0,
+            "status": "below_reserve",
+            "reasonCode": "reserve_shortfall"
+          }
+        ],
+        "recommendedOptionId": "extra",
+        "reasonCode": "extra_meets_reserve"
+      }
+    }
+  ]
+}
