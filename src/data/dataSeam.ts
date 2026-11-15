@@ -65,7 +65,6 @@ export interface ReadyMedaContextRef {
 
 export interface SceneDataPort {
   readonly integrationStage: 'skeleton_awaiting_assets' | 'connected';
-  readonly adapterEntrypointNote: string;
   readonly layers: Readonly<Record<DataLayerId, DataLayerDescriptor>>;
 }
 
@@ -85,8 +84,6 @@ export function isLayerReady(layer: DataLayerDescriptor): boolean {
 export function createPendingDataPort(): SceneDataPort {
   return {
     integrationStage: 'skeleton_awaiting_assets',
-    adapterEntrypointNote:
-      'Adaptador futuro: conectará artefactos de datos (Issue #6 / #8) a SceneDataPort en src/data/dataSeam.ts.',
     layers: {
       terrain_dem: {
         id: 'terrain_dem',

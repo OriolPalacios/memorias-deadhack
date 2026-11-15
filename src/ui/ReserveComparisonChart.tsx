@@ -14,11 +14,28 @@ const PLOT_LEFT = 128;
 const PLOT_RIGHT = 496;
 const PLOT_WIDTH = PLOT_RIGHT - PLOT_LEFT;
 
+const MOBILE_BAR_WIDTH = 320;
+const MOBILE_BAR_HEIGHT = 24;
+
 function formatMinutesLabel(value: number | null): string {
   if (value === null) {
     return 'Sin datos';
   }
   return `${value} min`;
+}
+
+function formatReadoutText(evaluation: OptionEvaluation): string {
+  const projected = evaluation.projectedAtBaseMin;
+  if (projected === null) {
+    return formatMinutesLabel(null);
+  }
+  if (evaluation.atReserveLimit) {
+    return `${projected} min · en el límite`;
+  }
+  if (evaluation.status === 'meets_reserve') {
+    return `${projected} min · +${evaluation.reserveDeltaMin} min`;
+  }
+  return `${projected} min · déficit ${evaluation.reserveDeficitMin} min`;
 }
 
 export function ReserveComparisonChart({
@@ -35,12 +52,12 @@ export function ReserveComparisonChart({
     reserveMin + 10,
   );
   const scaleMax = Math.ceil(maxVal / 10) * 10;
-  const xOf = (val: number) => {
-    const clamped = Math.max(0, Math.min(scaleMax, val));
-    return PLOT_LEFT + (clamped / scaleMax) * PLOT_WIDTH;
-  };
+  const ratioOf = (val: number) => Math.max(0, Math.min(1, val / scaleMax));
+  const xOf = (val: number) => PLOT_LEFT + ratioOf(val) * PLOT_WIDTH;
 
+  const reserveRatio = ratioOf(reserveMin);
   const reserveX = xOf(reserveMin);
+  const mobileReserveX = reserveRatio * MOBILE_BAR_WIDTH;
   const gridTicks = [0, reserveMin, 40, 60].filter(
     (tick, index, arr) => tick <= scaleMax && arr.indexOf(tick) === index,
   );
@@ -65,6 +82,27 @@ export function ReserveComparisonChart({
     },
   ];
 
+  const rowMetrics = rows.map((row) => {
+    const projected = row.evaluation.projectedAtBaseMin;
+    const hasShortfall =
+      projected !== null &&
+      row.evaluation.reserveDeficitMin !== null &&
+      row.evaluation.reserveDeficitMin > 0;
+    const barFill =
+      row.evaluation.status === 'meets_reserve'
+        ? '#d4a373'
+        : row.evaluation.status === 'below_reserve'
+          ? '#6b6b6b'
+          : '#444444';
+    return {
+      ...row,
+      projected,
+      hasShortfall,
+      barFill,
+      readoutText: formatReadoutText(row.evaluation),
+    };
+  });
+
   return (
     <div className="reserve-chart-block">
       <div className="chart-head">
@@ -85,8 +123,9 @@ export function ReserveComparisonChart({
         </div>
       </div>
 
+      {/* Desktop / tablet integrated SVG chart */}
       <svg
-        className="reserve-chart-svg"
+        className="reserve-chart-svg reserve-chart-desktop"
         viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
         role="img"
         aria-labelledby="reserve-chart-title"
@@ -139,34 +178,14 @@ export function ReserveComparisonChart({
         </text>
 
         {/* Data bars */}
-        {rows.map((row) => {
-          const { evaluation, title, y } = row;
-          const projected = evaluation.projectedAtBaseMin;
+        {rowMetrics.map((row) => {
+          const { projected, hasShortfall, barFill, readoutText, title, y } = row;
           const barHeight = 22;
           const barMidY = y + barHeight / 2 + 4;
 
           const barWidth =
             projected !== null && projected > 0 ? Math.max(2, xOf(projected) - PLOT_LEFT) : 0;
           const barEndX = PLOT_LEFT + barWidth;
-          const hasShortfall =
-            projected !== null && evaluation.reserveDeficitMin !== null && evaluation.reserveDeficitMin > 0;
-          const barFill =
-            evaluation.status === 'meets_reserve'
-              ? '#d4a373'
-              : evaluation.status === 'below_reserve'
-                ? '#6b6b6b'
-                : '#444444';
-
-          let readoutText: string;
-          if (projected === null) {
-            readoutText = 'Sin datos';
-          } else if (evaluation.atReserveLimit) {
-            readoutText = `${projected} min · en el límite`;
-          } else if (evaluation.status === 'meets_reserve') {
-            readoutText = `${projected} min · +${evaluation.reserveDeltaMin} min`;
-          } else {
-            readoutText = `${projected} min · déficit ${evaluation.reserveDeficitMin} min`;
-          }
 
           return (
             <g key={row.key}>
@@ -258,6 +277,131 @@ export function ReserveComparisonChart({
           );
         })}
       </svg>
+
+      {/* Mobile responsive chart: readable HTML typography + SVG bar geometry */}
+      <div
+        className="reserve-chart-mobile"
+        role="region"
+        aria-label={`Comparación de autonomía prevista al volver a base frente a la reserva de ${reserveMin} minutos`}
+      >
+        <div className="mobile-reserve-caption num">
+          <span className="mobile-reserve-dash" aria-hidden="true" />
+          <span>Umbral de reserva: {reserveMin} min</span>
+        </div>
+
+        {rowMetrics.map((row) => {
+          const mobileBarWidth =
+            row.projected !== null && row.projected > 0
+              ? Math.max(4, ratioOf(row.projected) * MOBILE_BAR_WIDTH)
+              : 0;
+
+          return (
+            <div key={row.key} className="mobile-bar-row">
+              <div className="mobile-bar-head">
+                <span className="mobile-bar-title">{row.title}</span>
+                <span className={`mobile-bar-readout num${row.hasShortfall ? ' is-shortfall' : ''}`}>
+                  {row.readoutText}
+                </span>
+              </div>
+
+              <svg
+                className="mobile-bar-svg"
+                viewBox={`0 0 ${MOBILE_BAR_WIDTH} ${MOBILE_BAR_HEIGHT}`}
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x={0}
+                  y={0}
+                  width={MOBILE_BAR_WIDTH}
+                  height={MOBILE_BAR_HEIGHT}
+                  fill="#1a1a1a"
+                />
+                {gridTicks.map((tick) => {
+                  if (tick === 0 || tick === reserveMin) {
+                    return null;
+                  }
+                  const gx = ratioOf(tick) * MOBILE_BAR_WIDTH;
+                  return (
+                    <line
+                      key={tick}
+                      x1={gx}
+                      y1={0}
+                      x2={gx}
+                      y2={MOBILE_BAR_HEIGHT}
+                      stroke="#2a2a2a"
+                      strokeWidth={1}
+                    />
+                  );
+                })}
+                {mobileBarWidth > 0 && (
+                  <rect
+                    x={0}
+                    y={0}
+                    width={mobileBarWidth}
+                    height={MOBILE_BAR_HEIGHT}
+                    fill={row.barFill}
+                  />
+                )}
+                {row.hasShortfall && (
+                  <g>
+                    <rect
+                      x={mobileBarWidth}
+                      y={0}
+                      width={Math.max(2, mobileReserveX - mobileBarWidth)}
+                      height={MOBILE_BAR_HEIGHT}
+                      fill="#2c1a20"
+                    />
+                    <line
+                      x1={mobileBarWidth}
+                      y1={1}
+                      x2={mobileReserveX}
+                      y2={1}
+                      stroke="#e5566f"
+                      strokeWidth="2"
+                    />
+                    <line
+                      x1={mobileBarWidth}
+                      y1={MOBILE_BAR_HEIGHT - 1}
+                      x2={mobileReserveX}
+                      y2={MOBILE_BAR_HEIGHT - 1}
+                      stroke="#e5566f"
+                      strokeWidth="2"
+                    />
+                  </g>
+                )}
+                <line
+                  x1={mobileReserveX}
+                  y1={0}
+                  x2={mobileReserveX}
+                  y2={MOBILE_BAR_HEIGHT}
+                  stroke="#d4a373"
+                  strokeWidth="2"
+                  strokeDasharray="3 3"
+                />
+              </svg>
+            </div>
+          );
+        })}
+
+        <div className="mobile-scale-axis num" aria-hidden="true">
+          {gridTicks.map((tick) => {
+            const pct = ratioOf(tick) * 100;
+            const alignClass =
+              tick === 0 ? ' is-start' : pct >= 85 ? ' is-end' : ' is-mid';
+            const style = pct >= 85 ? { right: 0 } : { left: `${pct}%` };
+            return (
+              <span
+                key={tick}
+                className={`mobile-tick${tick === reserveMin ? ' is-reserve' : ''}${alignClass}`}
+                style={style}
+              >
+                {tick} min
+              </span>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

@@ -64,7 +64,11 @@ export function DataReadinessPanel({ dataPort }: DataReadinessPanelProps) {
         })}
       </ul>
 
-      <p className="seam-note">{dataPort.adapterEntrypointNote}</p>
+      <p className="seam-note">
+        {readyCount === 0
+          ? 'Mientras estas capas sigan pendientes, la comprobación geográfica y térmica permanece bloqueada y la autonomía usa solo tiempos simulados.'
+          : 'Las capas disponibles ya pueden consultarse junto con la proyección de autonomía.'}
+      </p>
     </section>
   );
 }

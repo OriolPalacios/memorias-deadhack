@@ -131,6 +131,9 @@ export function OrbitalViewport({
               gl={{ antialias: true, powerPreference: 'default' }}
               onCreated={({ gl }) => {
                 const canvas = gl.domElement;
+                canvas.tabIndex = 0;
+                canvas.setAttribute('aria-label', 'Visor orbital 3D de referencia de Jezero');
+                canvas.setAttribute('aria-describedby', 'viewport-keyboard-hint');
                 const handleLost = (event: Event) => {
                   event.preventDefault();
                   onWebGLUnavailable();
@@ -156,15 +159,22 @@ export function OrbitalViewport({
       </div>
 
       <div className="viewport-footer">
-        <p className="viewport-caption">
-          Escena geométrica de referencia a la espera del DTM/DEM real de Jezero (Issue #6 / #8).
-          Sin relieve marciano ni coordenadas métricas inventadas.
-        </p>
+        <div className="viewport-notes">
+          <p className="viewport-caption">
+            Escena geométrica de referencia a la espera del DTM/DEM de Jezero.
+            Sin relieve marciano ni coordenadas métricas inventadas.
+          </p>
+          {isCanvasActive && (
+            <p id="viewport-keyboard-hint" className="viewport-kbd-hint">
+              Teclado sobre el visor: Shift+Flechas orbita, Flechas desplazan y Tab avanza.
+            </p>
+          )}
+        </div>
         <span className="viewport-state num">
           {isCanvasActive
             ? hasOrbitedView
-              ? 'Vista orbitada · Arrastrar/rueda · Restablecer disponible'
-              : 'Vista orbital inicial · Arrastrar para orbitar'
+              ? 'Vista orbitada · Arrastrar, rueda o teclado · Restablecer disponible'
+              : 'Vista orbital inicial · Arrastrar o Shift+Flechas para orbitar'
             : 'Modo sin WebGL'}
         </span>
       </div>

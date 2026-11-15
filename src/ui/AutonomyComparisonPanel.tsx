@@ -4,6 +4,7 @@ import type {
   OptionEvaluation,
   RecommendationReasonCode,
 } from '../domain/autonomy.ts';
+import type { SimulatedMissionState } from '../domain/missionEngine.ts';
 import type { RouteProjection } from '../domain/scenario.ts';
 import { ReserveComparisonChart } from './ReserveComparisonChart.tsx';
 
@@ -11,6 +12,7 @@ interface AutonomyComparisonPanelProps {
   readonly projection: RouteProjection;
   readonly inspectedOptionId: DecisionOptionId | null;
   readonly onInspectOption: (optionId: DecisionOptionId) => void;
+  readonly mission?: SimulatedMissionState;
 }
 
 function getStatusPillProps(evaluation: OptionEvaluation): {
@@ -111,14 +113,33 @@ function renderStatusDescription(status: OptionAutonomyStatus): string {
   }
 }
 
+function getComparisonMetaLabel(mission?: SimulatedMissionState): string {
+  if (!mission || mission.phase === 'planning') {
+    return 'Punto de decisión futuro (simulado)';
+  }
+  if (mission.phase === 'outbound' || mission.phase === 'observing') {
+    return 'Proyección al punto de decisión · simulación en curso';
+  }
+  if (mission.phase === 'deciding') {
+    return 'Punto de decisión activo · elige rama';
+  }
+  return 'Comparación fijada en el punto de decisión (simulada)';
+}
+
 export function AutonomyComparisonPanel({
   projection,
   inspectedOptionId,
   onInspectOption,
+  mission,
 }: AutonomyComparisonPanelProps) {
   const { evaluation } = projection;
   const { extra, direct } = evaluation.options;
   const recBadge = getRecommendationBadge(evaluation.reasonCode);
+  const checkpointReached =
+    mission !== undefined && mission.checkpointAvailableMin !== null;
+  const displayedCheckpointMin =
+    mission?.checkpointAvailableMin ?? projection.availableAtCheckpointMin;
+  const headerMeta = getComparisonMetaLabel(mission);
 
   const optionRows: ReadonlyArray<{
     readonly id: DecisionOptionId;
@@ -151,7 +172,7 @@ export function AutonomyComparisonPanel({
           <h2 id="comparison-heading">
             Proyección de autonomía · {projection.route.code}
           </h2>
-          <span className="panel-meta">Punto de decisión futuro (simulado)</span>
+          <span className="panel-meta">{headerMeta}</span>
         </div>
         <span className={`pill ${recBadge.toneClass}`}>{recBadge.label}</span>
       </header>
@@ -166,12 +187,16 @@ export function AutonomyComparisonPanel({
           <div className="kpi-sub">Simulado al partir</div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Disponible en decisión</div>
+          <div className="kpi-label">
+            {checkpointReached ? 'Fijado al decidir' : 'Disponible en decisión'}
+          </div>
           <div className="kpi-value num">
-            {projection.availableAtCheckpointMin ?? '—'} <small>min</small>
+            {displayedCheckpointMin ?? '—'} <small>min</small>
           </div>
           <div className="kpi-sub num">
-            Proyección tras {projection.consumedBeforeDecisionMin} min (ida + obs.)
+            {mission && mission.phase !== 'planning'
+              ? `Cruce tras ${projection.consumedBeforeDecisionMin} min (saldo actual: ${mission.remainingMin} min)`
+              : `Proyección tras ${projection.consumedBeforeDecisionMin} min (ida + obs.)`}
           </div>
         </div>
         <div className="kpi">
@@ -230,7 +255,10 @@ export function AutonomyComparisonPanel({
                       onClick={() => onInspectOption(row.id)}
                     >
                       <span className="row-option-name">{row.title}</span>
-                      <span className="sub">{row.breakdown}</span>
+                      <span className="sub">
+                        {row.breakdown}
+                        {mission?.chosenBranch === row.id ? ' · Rama seleccionada' : ''}
+                      </span>
                     </button>
                   </td>
                   <td className="n num" data-label="Coste">

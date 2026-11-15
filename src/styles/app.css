@@ -496,6 +496,19 @@ table,
   color: var(--faint);
 }
 
+.route-option.is-locked {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.route-option.is-locked:hover {
+  background: var(--surface-step);
+}
+
+.route-option.is-locked.is-selected:hover {
+  background: var(--raised);
+}
+
 .panel-foot-action {
   display: grid;
   gap: 6px;
@@ -506,6 +519,186 @@ table,
   font-size: var(--fs-sub);
   color: var(--faint);
   line-height: 1.38;
+}
+
+.mission-runner {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-quiet);
+}
+
+.mission-runner-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mission-runner-title {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mission-step-caption {
+  display: block;
+  font-size: var(--fs-sub);
+  color: var(--muted);
+}
+
+.mission-balance-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--radius-well);
+  background: var(--surface-step);
+  border: 1px solid var(--border-quiet);
+}
+
+.mission-metric {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mission-metric-label {
+  font-size: var(--fs-sub);
+  color: var(--muted);
+}
+
+.mission-metric-value {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mission-guidance {
+  font-size: var(--fs-sub);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.mission-primary-btn,
+.mission-reset-btn {
+  width: 100%;
+  white-space: normal;
+  min-height: 44px;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.mission-branch-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.mission-branch-btn {
+  width: 100%;
+  white-space: normal;
+  height: auto;
+  min-height: 44px;
+  padding: 10px 12px;
+  display: grid;
+  justify-items: start;
+  text-align: left;
+  gap: 3px;
+}
+
+.mission-branch-meta {
+  font-size: var(--fs-sub);
+  font-weight: 400;
+  line-height: 1.35;
+  opacity: 0.88;
+}
+
+.mission-completion-box {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-well);
+  background: var(--raised);
+  border: 1px solid var(--border-quiet);
+}
+
+.mission-completion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mission-completion-branch {
+  font-size: var(--fs-sub);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.mission-completion-copy {
+  font-size: var(--fs-sub);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.mission-log-block {
+  display: grid;
+  gap: 5px;
+}
+
+.mission-log-heading {
+  margin: 0;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.mission-log-list,
+.mission-history-list {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-well);
+  background: var(--surface-step);
+  border: 1px solid var(--border-quiet);
+  display: grid;
+  gap: 6px;
+  list-style: none;
+}
+
+.mission-log-item {
+  display: grid;
+  gap: 2px;
+}
+
+.mission-log-title {
+  font-size: var(--fs-sub);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.mission-log-note {
+  font-size: var(--fs-sub);
+  line-height: 1.35;
+  color: var(--faint);
+}
+
+.mission-history-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-sub);
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.mission-history-rem {
+  flex: none;
+  color: var(--text);
+  font-weight: 500;
 }
 
 /* ---------- Data Readiness Panel ---------- */
@@ -593,6 +786,11 @@ table,
   height: 100%;
 }
 
+.viewport-stage canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .webgl-fallback {
   height: 100%;
   min-height: 248px;
@@ -625,9 +823,19 @@ table,
   gap: 6px 16px;
 }
 
+.viewport-notes {
+  display: grid;
+  gap: 2px;
+}
+
 .viewport-caption {
   font-size: var(--fs-sub);
   color: var(--muted);
+}
+
+.viewport-kbd-hint {
+  font-size: var(--fs-sub);
+  color: var(--faint);
 }
 
 .viewport-state {
@@ -737,6 +945,85 @@ table,
   width: 100%;
   height: auto;
   min-height: 112px;
+}
+
+.reserve-chart-mobile {
+  display: none;
+}
+
+.mobile-reserve-caption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.mobile-reserve-dash {
+  width: 2px;
+  height: 14px;
+  border-left: 2px dashed var(--accent);
+  flex: none;
+}
+
+.mobile-bar-row {
+  display: grid;
+  gap: 5px;
+}
+
+.mobile-bar-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.mobile-bar-title {
+  font-size: var(--fs-sub);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.mobile-bar-readout {
+  font-size: var(--fs-sub);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.mobile-bar-readout.is-shortfall {
+  color: var(--negative);
+}
+
+.mobile-bar-svg {
+  width: 100%;
+  height: 24px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mobile-scale-axis {
+  position: relative;
+  height: 18px;
+}
+
+.mobile-tick {
+  position: absolute;
+  top: 0;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.mobile-tick.is-reserve {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.mobile-tick.is-mid {
+  transform: translateX(-50%);
 }
 
 /* ---------- Comparison Table ---------- */
@@ -854,9 +1141,35 @@ table,
 
 /* ---------- Mobile (390px) ---------- */
 @media (max-width: 600px) {
+  :root {
+    --control-height: 44px;
+  }
+
+  .btn,
+  .layer-toggle-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .row-inspect-btn {
+    min-height: 44px;
+    width: 100%;
+    padding: 6px 0;
+    align-content: center;
+  }
+
+  .reserve-chart-desktop {
+    display: none;
+  }
+
+  .reserve-chart-mobile {
+    display: grid;
+    gap: 10px;
+  }
+
   .topbar {
     flex-wrap: wrap;
-    padding: 10px 16px;
+    padding: 10px 14px;
     gap: 10px;
   }
 
@@ -866,11 +1179,22 @@ table,
 
   .topbar-right {
     width: 100%;
+    flex-wrap: wrap;
     justify-content: space-between;
+    gap: 8px 10px;
     padding-left: 0;
     border-left: 0;
     padding-top: 8px;
     border-top: 1px solid var(--border);
+  }
+
+  .topbar-right .pill {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .topbar-right .btn {
+    flex-shrink: 0;
   }
 
   .workspace {

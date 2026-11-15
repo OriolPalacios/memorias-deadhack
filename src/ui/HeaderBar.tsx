@@ -53,8 +53,8 @@ export function HeaderBar({
       <div className="topbar-right">
         <span className="pill warn">
           {hasConnectedAssets
-            ? 'Assets conectados'
-            : 'Esqueleto local · Datos en espera'}
+            ? 'Datos de misión disponibles'
+            : 'Simulación previa · Datos en espera'}
         </span>
         <button
           type="button"

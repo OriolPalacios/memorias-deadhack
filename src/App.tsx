@@ -12,6 +12,7 @@ import {
   buildRouteProjection,
   SIMULATED_MISSION_BASELINE,
 } from './domain/scenario.ts';
+import { getMissionPhaseMeta } from './domain/missionEngine.ts';
 import { OrbitalViewport } from './scene/OrbitalViewport.tsx';
 import { detectWebGLSupport } from './scene/webglSupport.ts';
 import { AutonomyComparisonPanel } from './ui/AutonomyComparisonPanel.tsx';
@@ -65,6 +66,7 @@ export function App({ dataPort }: AppProps) {
     () => buildRouteProjection(state.selectedRouteId, SIMULATED_MISSION_BASELINE),
     [state.selectedRouteId],
   );
+  const phaseMeta = getMissionPhaseMeta(state.mission.phase);
 
   const hasRealTerrain = isLayerReady(resolvedPort.layers.terrain_dem);
   const hasConnectedAssets = resolvedPort.integrationStage === 'connected';
@@ -85,15 +87,15 @@ export function App({ dataPort }: AppProps) {
             <h1>¿Conserva otra parada la reserva de regreso?</h1>
             <p className="title-sub">
               Escenario simulado previo a la caminata en Jezero. Los tiempos de
-              ruta aún no se han recorrido ni derivan de trazas reales.
+              ruta aún no derivan de terreno DEM ni de trazas reales.
             </p>
           </div>
           <div className="title-summary-note num">
             <span>{projection.route.code}</span>
             <span aria-hidden="true">·</span>
-            <span>
-              Disponible proyectado {projection.availableAtCheckpointMin} min
-            </span>
+            <span>{phaseMeta.label}</span>
+            <span aria-hidden="true">·</span>
+            <span>Restante {state.mission.remainingMin} min</span>
           </div>
         </div>
 
@@ -101,7 +103,12 @@ export function App({ dataPort }: AppProps) {
           <div className="grid-slot slot-route">
             <RouteSelectorPanel
               selectedRouteId={state.selectedRouteId}
+              mission={state.mission}
               onSelectRoute={(routeId) => dispatch({ type: 'select_route', routeId })}
+              onDispatchMissionEvent={(event) =>
+                dispatch({ type: 'mission_event', event })
+              }
+              onResetScenario={() => dispatch({ type: 'reset_scenario' })}
             />
           </div>
 
@@ -129,6 +136,7 @@ export function App({ dataPort }: AppProps) {
           <div className="grid-slot slot-comparison">
             <AutonomyComparisonPanel
               projection={projection}
+              mission={state.mission}
               inspectedOptionId={state.inspectedOptionId}
               onInspectOption={(optionId) =>
                 dispatch({ type: 'inspect_option', optionId })
