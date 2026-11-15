@@ -9,13 +9,13 @@ Repositorio compartido del equipo DeadHack para **Interplanetary Survival Guide:
 
 **Inicio rápido:** leer [memorias/README.md](memorias/README.md) y [memorias/PROTOCOLO.md](memorias/PROTOCOLO.md).
 
-## MVP en definición: «Una parada más»
+## MVP aprobado: «Una parada más»
 
 Copiloto para preparar una caminata en Jezero, explorar un terreno 3D y decidir si una parada científica adicional conserva el margen de regreso.
 
 **Demo:** 15 de noviembre de 2026, 10:00 p. m., Perú (`America/Lima`, UTC−05:00). Equipo: 3 personas.
 
-- [Spec y criterios de aceptación](docs/SPEC.md): borrador para revisión, todavía sin implementación.
+- [Spec y criterios de aceptación](docs/SPEC.md): revisión 0.3 aprobada por el usuario; implementación por tareas y contratos de cada ámbito.
 - [Arquitectura y evaluación de Three.js](docs/ARCHITECTURE.md).
 - [Recursos del reto y procedencia de los datos](docs/RESOURCES.md).
 - [Decisiones y preguntas abiertas](docs/DECISIONS.md).

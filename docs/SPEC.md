@@ -1,10 +1,10 @@
 # DeadHack MVP — Una parada más
 
-**Revisión:** 0.3 · **Estado:** borrador para revisión humana · **Fecha:** 2026-11-15.
+**Revisión:** 0.3 · **Estado:** aprobado por el usuario · **Fecha:** 2026-11-15.
 **Tarea de definición:** [Issue #2](https://github.com/OriolPalacios/memorias-deadhack/issues/2).
 **Demo:** 2026-11-15, 22:00, `America/Lima` (UTC−05:00). Equipo: 3 personas.
 
-Los requisitos confirmados en conversación se identifican en [DECISIONS.md](DECISIONS.md). Esta revisión todavía no es un contrato de ejecución aceptado. La aprobación duradera y la integración siguen [el protocolo compartido](../memorias/PROTOCOLO.md).
+El usuario aprobó explícitamente este spec, React, TypeScript, Vite, React Three Fiber y cámara orbital el 15-11-2026. El hosting se decidirá después y no bloquea el desarrollo local. Esta aprobación fija alcance y arquitectura de aplicación; los contratos de datos y de cada tarea se cierran por separado. La integración al repositorio sigue [el protocolo compartido](../memorias/PROTOCOLO.md).
 
 ## Problema y propuesta
 
@@ -20,7 +20,7 @@ La experiencia se concentra en un recorte de Jezero, con **terreno 3D real deriv
 4. **Decidir:** comparar «otra parada» con «regresar», ver el presupuesto al llegar a la base y leer la razón de la recomendación.
 5. **Cerrar:** elegir una acción, mostrar el resultado simulado y poder reiniciar el mismo escenario.
 
-Interfaz propuesta: español, escritorio y navegador Chrome reciente. Un panel HTML contiene todos los controles y la explicación, de modo que la acción no dependa exclusivamente de seleccionar objetos en 3D.
+Interfaz del MVP: español, escritorio y navegador Chrome reciente. Un panel HTML contiene todos los controles y la explicación, de modo que la acción no dependa exclusivamente de seleccionar objetos en 3D.
 
 ## Requisitos y aceptación
 
@@ -65,7 +65,7 @@ Caso de referencia, después de la observación principal:
 
 Los 15 min de la parada extra incluyen su tramo de acceso y observación; no se vuelven a descontar en el regreso. La diferencia entre 35 min de ida y 30 de vuelta es una hipótesis del escenario.
 
-Propuesta completa de tiempos de ambas rutas, igualmente simulados:
+Tiempos de ambas rutas del spec aprobado, igualmente simulados:
 
 | Ruta | Ida | Observación principal | Regreso directo | Total principal | Previsto en base (120 iniciales) |
 |---|---:|---:|---:|---:|---:|
@@ -74,7 +74,7 @@ Propuesta completa de tiempos de ambas rutas, igualmente simulados:
 
 Ambas llegan al mismo objetivo principal y utilizan el mismo regreso directo. B representa una variante didáctica de recorrido más largo, sin atribuirle un descubrimiento científico adicional. Sus geometrías siguen pendientes del recorte; aceptar tiempos no prueba transitabilidad. Tras B quedan 55 min: extra 5 y vuelta directa 25, por lo que también corresponde regresar.
 
-### Clasificación y recomendación propuestas
+### Clasificación y recomendación
 
 Los costes y presupuestos deben ser finitos y no negativos; la reserva es estrictamente positiva. Datos ausentes o inválidos producen `unknown` y una razón, sin sustituirlos por cero. Para una opción con evaluación conocida:
 
@@ -97,7 +97,7 @@ La recomendación usa esta **precedencia**, sin asumir que el llamado regreso di
 
 Nunca se asigna una cifra a la opción desconocida. Esta precedencia resuelve también un caso de QA con 65 disponibles, reserva 20, directa de coste 50 y extra de coste 5+30: la extra llega con 30 y la directa con 15; corresponde la prioridad 1.
 
-## Alcance para mañana
+## Alcance para la demo
 
 Incluye una escena pequeña, una malla preparada previamente, dos rutas de escenario, dos alternativas en el punto de decisión, foto/contexto científico, capa térmica, fuentes, reinicio y QA del flujo completo. El usuario confirmó recomendaciones deterministas explicadas, sin chat libre; no se necesita una llamada a un LLM durante la demo. La ortoimagen orbital y una superposición geológica son adicionales si los productos están preparados; la ficha histórica MEDA permanece como contexto.
 
@@ -111,4 +111,4 @@ La posición, base, rutas, segunda parada y autonomía son simuladas. Las observ
 
 ## Condición para iniciar implementación
 
-Aceptar esta revisión y la recomendación de arquitectura; resolver los contratos mínimos del [plan de entrega](DELIVERY.md): recorte/DTM con cobertura, georreferenciación, capa térmica y geometrías de ambas rutas. Lucian atiende datos y revisión de contratos en [Issue #6](https://github.com/OriolPalacios/memorias-deadhack/issues/6). Cada tarea de código se congela en su Issue y contrato, identificando la revisión aceptada. Se pueden realizar antes consultas de Ground de solo lectura para resolver los datos pendientes.
+El alcance y la base técnica ya están aprobados. Cada tarea de código debe tener Issue, worktree propio y contrato de su ámbito. El bootstrap de la app y el dominio pueden avanzar con sus interfaces acordadas mientras Lucian cierra datos/contratos en [Issue #6](https://github.com/OriolPalacios/memorias-deadhack/issues/6). Integrar el terreno y las capas reales requiere recorte/cobertura, georreferenciación y geometrías A/B verificables. No se vuelve a pedir aprobación del spec para resolver nombres de campos, versiones de paquetes compatibles u otros detalles técnicos dentro de este alcance. El hosting queda aplazado por indicación del usuario.

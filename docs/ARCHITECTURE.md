@@ -1,20 +1,20 @@
-# Arquitectura propuesta del MVP
+# Arquitectura del MVP
 
-**Estado:** propuesta de Sol para revisión; no hay aplicación implementada ni dependencias instaladas por este cambio.
+**Estado:** base de aplicación aprobada por el usuario el 15-11-2026: React, TypeScript, Vite, React Three Fiber y cámara orbital. Los contratos de datos siguen en su frente específico. Esta actualización no implementa la app.
 
 **Actualización 15-11:** demo a las 22:00, Perú. El usuario confirmó recomendaciones explicadas sin chat libre e inclusión de una capa térmica. Lucian atiende datos y revisión de contratos en [Issue #6](https://github.com/OriolPalacios/memorias-deadhack/issues/6); estas decisiones de producto no declaran que los assets ya estén preparados.
 
 La entrada de datos es el [relevo de Lucian en PR #3](https://github.com/OriolPalacios/memorias-deadhack/pull/3#issuecomment-6898767349), complementado por [PR #7](https://github.com/OriolPalacios/memorias-deadhack/pull/7). Allí siguen por acordar serialización del terreno, orden/origen de la rejilla y máscara, eventos y ejemplos de evaluación. Son entregables del frente de contratos; las fuentes localizadas no sustituyen esos ejemplos.
 
-## Recomendación
+## Base aceptada
 
 Una SPA con **React + TypeScript + Vite + Three.js mediante React Three Fiber**. Drei se usa solo para utilidades concretas de cámara/controles si reduce trabajo. CSS para paneles; lógica de autonomía en funciones TypeScript puras; datos de escenario y assets estáticos locales. Vitest para reglas/contratos y Playwright o computer use de Terra para el recorrido en Chrome.
 
 React Three Fiber es un renderer de Three.js para React; su [documentación de instalación](https://r3f.docs.pmnd.rs/getting-started/installation) exige emparejar las versiones mayores de React y Fiber. En el bootstrap Gemini deberá elegir una combinación compatible, fijar el lockfile y registrar versiones. No usar un `latest` flotante como contrato.
 
-| Opción | Encaje para esta demo | Decisión propuesta |
+| Opción | Encaje para esta demo | Decisión para el MVP |
 |---|---|---|
-| Three.js + React Three Fiber | Escena local, control de malla/materiales/cámara y paneles React; permite servir un recorte preparado sin servicios geoespaciales en vivo. | Recomendada. |
+| Three.js + React Three Fiber | Escena local, control de malla/materiales/cámara y paneles React; permite servir un recorte preparado sin servicios geoespaciales en vivo. | Aprobada por el usuario. |
 | Three.js directo | Ofrece el mismo motor con gestión manual del ciclo de vida y sincronización con React. | Útil si el equipo ya tiene una escena reutilizable; evita mantener dos enfoques a la vez. |
 | CesiumJS | Su [modelo de terreno](https://cesium.com/learn/cesiumjs-learn/cesiumjs-terrain/) favorece terreno teselado y grandes extensiones; Mars requiere configurar referencia planetaria y proveedor de terreno propios. | Su preparación añade riesgo para un recorte y una entrega mañana; reconsiderar para expansión planetaria. |
 | Visor cartográfico 2D | Simplifica navegación de capas, pero no satisface el requisito 3D elegido por el usuario. | Solo posible vista auxiliar futura. |
@@ -28,7 +28,7 @@ La elección es una evaluación de alcance/plazo, no un benchmark realizado. No 
 - Lucian define el producto y cómo expresarlo en los contratos de datos: cobertura, resolución nativa, referencia espacial, archivo preparado, leyenda/unidades y contexto temporal. La app debe poder distinguir un asset ausente de una zona sin cobertura; no deduce grados Celsius de colores sin una calibración explícita del producto.
 - Preparar recorte/alineación antes de servir los assets. La app consume el resultado y muestra las limitaciones; este documento no fija una serialización nueva por encima del trabajo de contratos de #6.
 
-Queda por confirmar la base técnica recomendada y el destino de publicación. Estado de misión mediante eventos y un reducer de React es suficiente como propuesta inicial; no hace falta una plataforma de agentes en el runtime del producto. Los agentes del harness trabajan durante el desarrollo.
+La base técnica y la cámara orbital están aprobadas. El usuario aplazó el hosting; la app se desarrolla y ensaya localmente. El estado de misión se organiza mediante eventos y un reducer de React. Los agentes del harness trabajan durante el desarrollo.
 
 ## Separación mínima
 
@@ -58,6 +58,22 @@ Estos campos son un borrador del contrato. Una vez aceptados, se versionan como 
 
 Valores científicos ausentes son `null` más motivo, no ceros inventados. Unidades y enums son explícitos. La UI no recalcula autonomía por su cuenta. `exhausted` se aplica a previsto ≤0; `below_reserve` a 0<previsto<reserva; `meets_reserve` a previsto≥reserva, con reserva>0. La selección se hace por la tabla de precedencia del SPEC, no por el orden accidental de condiciones en código. Una versión incompatible requiere acuerdo productor/consumidor antes de cambiarla.
 
+### Convenciones de `evaluation/v1` confirmadas por Sol
+
+Se acepta la propuesta del [comentario de Lucian](https://github.com/OriolPalacios/memorias-deadhack/pull/3#issuecomment-6899618403) para alinear dominio y visor, dentro del comportamiento del spec aprobado:
+
+| Elemento | Nombre acordado |
+|---|---|
+| IDs de las opciones | `extra`, `direct` |
+| Minutos previstos al llegar a base | `projectedAtBaseMin` (`number` o `null`) |
+| Campo de razón de la recomendación conjunta | `reasonCode` |
+| Recomendación de parada extra que cumple reserva | `extra_meets_reserve` |
+| Recomendación de regreso directo que cumple reserva | `direct_meets_reserve` |
+| Ninguna conocida cumple y hay datos desconocidos | `insufficient_data`; `recommendedOptionId: null` |
+| Ambas conocidas incumplen | `reserve_unmet`; `recommendedOptionId: null` |
+
+Los deltas, déficits y estados conservan la semántica de SPEC. La UI traduce los códigos a texto. Estas convenciones resuelven los nombres solicitados; el ejemplo completo/serialización de cada contrato y las geometrías A/B se acuerdan con Lucian antes de sus implementaciones consumidoras. No se atribuye revisión de los nueve casos completos a la tabla de cuatro casos publicada en el comentario.
+
 ## Coordenadas y terreno
 
 1. Seleccionar un producto numérico DTM/DEM que cubra el área científica y comprobar su etiqueta geoespacial. El candidato HiRISE está en [RESOURCES.md](RESOURCES.md); su cobertura en Enchanted Lake aún no está validada.
@@ -70,7 +86,7 @@ La rejilla puede convertirse en geometría al cargar; la transformación pesada 
 
 ## Estado y carga
 
-Estados propuestos: `planning → outbound → observing → deciding → returning → completed`, con `extra_stop` si se elige continuar y un estado de error de recursos. Una transición aplica su coste una vez. Cambiar ruta o presupuesto se limita a `planning` o a reiniciar.
+Estados de misión: `planning → outbound → observing → deciding → returning → completed`, con `extra_stop` si se elige continuar y un estado de error de recursos. Una transición aplica su coste una vez. Cambiar ruta o presupuesto se limita a `planning` o a reiniciar.
 
 Los assets esenciales se sirven desde la misma app. Enlaces de fuente externos pueden abrirse, pero el flujo principal funciona sin red externa una vez servida la app. No se promete una PWA ni apertura directa con `file://`.
 

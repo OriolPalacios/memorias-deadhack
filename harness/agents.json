@@ -7,14 +7,26 @@
   "spec": {
     "path": "docs/SPEC.md",
     "revision": "0.3",
-    "status": "draft",
-    "implementation_enabled": false
+    "status": "accepted",
+    "approval_source": "explicit_user_message_2026-11-15",
+    "repository_integration_status": "pending_pr_review",
+    "implementation_enabled": true,
+    "implementation_prerequisites": [
+      "assigned_issue",
+      "isolated_worktree",
+      "relevant_task_contract_accepted",
+      "runtime_permissions_preflight"
+    ]
   },
   "demo": {
     "deadline": "2026-11-15T22:00:00-05:00",
     "timezone": "America/Lima",
     "human_team_size": 3,
     "terrain_3d_required": true
+  },
+  "hosting": {
+    "status": "deferred_by_user",
+    "required_for_local_development": false
   },
   "coordination": {
     "task_authority": "github_issues_and_pull_requests",

@@ -1,7 +1,7 @@
 # Plan de entrega — demo 3D
 
 **Plazo confirmado:** domingo 15-11-2026, 22:00, Perú (UTC−05:00).
-**Plan propuesto:** se ajusta con el equipo; no supone disponibilidad nocturna de todas las personas. La implementación comienza con spec/contratos aceptados y tareas adquiridas en GitHub.
+**Plan operativo propuesto:** el usuario ya aprobó el spec 0.3 y la base de aplicación; los horarios se ajustan con el equipo. Cada implementación empieza con su contrato específico y tarea adquirida en GitHub. Hosting aplazado; el desarrollo y los ensayos locales pueden avanzar.
 
 ## Frentes y operadores actuales
 
@@ -25,7 +25,7 @@ Son frentes de responsabilidad; sus propietarios por defecto están en el JSON y
 | WP-04 · Capas y demo estable | Térmica activable y trazada, foto/fuentes, errores útiles, reinicio, assets locales y recorrido repetible. | Flujo WP-03 y producto térmico preparado. |
 | WP-05 · QA y ensayo | Terra entrega evidencia independiente sobre el candidato; correcciones acotadas y ensayo final. | WP-04. |
 
-Estos paquetes son el backlog de producto, no una afirmación de Issues ya creados para cada uno. #6 ya cubre Ground y revisión de datos/contratos a cargo de Lucian. El resto se convierte en tareas tras acordar el spec; un lead AGY por repositorio coordina su ejecución con las dependencias de los agentes externos.
+Estos paquetes son el backlog de producto, no una afirmación de Issues ya creados para cada uno. #6 ya cubre Ground y revisión de datos/contratos a cargo de Lucian. El spec está aprobado: bootstrap y dominio pueden pasar a tareas de ejecución con sus interfaces acordadas; la integración del terreno depende del paquete de datos. Un lead AGY por repositorio coordina su ejecución con las dependencias de los agentes externos.
 
 ## Cortes propuestos, hora de Perú
 
