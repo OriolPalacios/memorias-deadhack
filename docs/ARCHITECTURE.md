@@ -4,6 +4,8 @@
 
 **Actualización 15-11:** demo a las 22:00, Perú. El usuario confirmó recomendaciones explicadas sin chat libre e inclusión de una capa térmica. Lucian atiende datos y revisión de contratos en [Issue #6](https://github.com/OriolPalacios/memorias-deadhack/issues/6); estas decisiones de producto no declaran que los assets ya estén preparados.
 
+La entrada de datos es el [relevo de Lucian en PR #3](https://github.com/OriolPalacios/memorias-deadhack/pull/3#issuecomment-6898767349), complementado por [PR #7](https://github.com/OriolPalacios/memorias-deadhack/pull/7). Allí siguen por acordar serialización del terreno, orden/origen de la rejilla y máscara, eventos y ejemplos de evaluación. Son entregables del frente de contratos; las fuentes localizadas no sustituyen esos ejemplos.
+
 ## Recomendación
 
 Una SPA con **React + TypeScript + Vite + Three.js mediante React Three Fiber**. Drei se usa solo para utilidades concretas de cámara/controles si reduce trabajo. CSS para paneles; lógica de autonomía en funciones TypeScript puras; datos de escenario y assets estáticos locales. Vitest para reglas/contratos y Playwright o computer use de Terra para el recorrido en Chrome.

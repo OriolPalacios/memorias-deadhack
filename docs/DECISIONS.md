@@ -17,7 +17,7 @@ Este registro captura la conversación actual; las decisiones duraderas se aprue
 | C-08 | El usuario pidió una asignación fácilmente modificable en JSON; inicialmente todos los frentes estaban a su cargo. | `harness/team.json` registra propietarios por defecto; la asignación de datos se actualiza con C-09. |
 | C-09 | Lucian atiende datos y contratos; #6 confirma su trabajo de Ground/revisión con Codex. | Lucian figura como propietario del frente de datos; no se duplican ni editan sus entregables desde el harness. |
 | C-10 | El copiloto dará recomendaciones explicadas, sin chat libre con IA. | Evaluación determinista en el navegador; no hay dependencia de una API de LLM para la demo. |
-| C-11 | Incluir la capa térmica en el MVP; el usuario indicó asumir su inclusión si no aparecía una decisión previa. | Se añade MVP-11. La búsqueda en Issues/comentarios y los docs locales no encontró selección de producto térmico ya acordada; el producto/contrato quedan por concretar en el frente de datos. |
+| C-11 | Incluir la capa térmica en el MVP; el usuario indicó asumir su inclusión y remitió al relevo de Lucian en PR #3. | Se añade MVP-11. El relevo identifica mosaicos THEMIS públicos; el recorte concreto y su contrato siguen dentro del frente de datos. |
 
 ## Recomendaciones de Sol pendientes de aceptación
 
@@ -35,7 +35,7 @@ Este registro captura la conversación actual; las decisiones duraderas se aprue
 | ID | Pregunta / siguiente acción | Responsable | Bloquea |
 |---|---|---|---|
 | Q-01 | Revisar y aceptar spec 0.3 y base técnica recomendada, o dar correcciones. Chat y capa térmica ya están resueltos por C-10/C-11. | Usuario/equipo con Sol | Contratos de implementación de producto. |
-| Q-02 | Verificar DTM/recorte, objetivo y transformación; seleccionar y alinear el producto térmico con su leyenda. | Lucian, frente de datos; coordinación #6 | Terreno/capas y colocación científica reales. |
+| Q-02 | Completar cobertura A/B, objetivo y transformación; preparar recorte térmico y leyenda. Conciliar el avance de muestreo reportado en el comentario de PR #3 con el informe versionado de PR #7. | Lucian, frente de datos; coordinación #6 | Assets preparados y colocación científica reales. |
 | Q-03 | Revisar contratos de terreno, escenario y evaluación, geometrías y tiempos didácticos A/B, sin atribuir transitabilidad verificada a la simulación. | Lucian prepara/revisa contratos; Sol resuelve decisiones de producto | Interfaces aceptadas para productores/consumidores. |
 | Q-04 | Asignación actual: Lucian en datos/contratos y Oriol en los demás frentes, registrados en `harness/team.json`. | Usuario/equipo | No bloquea el reparto; confirmar cambios en los Issues correspondientes. |
 | Q-05 | Seleccionar hosting estático y persona autorizada para publicar; confirmar dispositivo de demo. | Usuario/equipo | Publicación y ensayo de rendimiento final. |
