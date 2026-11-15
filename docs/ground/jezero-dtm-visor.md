@@ -15,6 +15,26 @@ Referencia de revisión: [spec 0.2](https://github.com/OriolPalacios/memorias-de
 
 Ambos puntos caen en el rectángulo de la ortoimagen. Quedan pendientes los píxeles válidos del DTM y los corredores. En un entorno que pueda leer el binario, obtener con GDAL la etiqueta, CRS, unidades y máscara. Transformar los puntos a su CRS, muestrearlos y medir cobertura del corredor con la geometría versionada de la base y las rutas simuladas. Si se necesita geolocalizar la Hazcam, identificar la toma original y su RMC para cruzarla con [PDS PLACES](https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_rover_places/data_localizations/).
 
+### Muestreo reproducible del DTM · 15 de noviembre de 2026
+
+**Estado:** catálogo USGS y distribución del original verificados. Las dos aperturas del catálogo desde el navegador de trabajo agotaron el tiempo. El buscador no entregó el `.IMG`, y en la sesión local no estaban disponibles GDAL ni las bibliotecas geoespaciales necesarias. Aún no se han comprobado elevaciones, máscara NoData ni continuidad de las rutas. El repo tampoco contiene geometrías versionadas de las rutas A/B en la revisión consultada.
+
+1. Consultar la [colección STAC de DTM HiRISE](https://stac.astrogeology.usgs.gov/api/collections/mro_hirise_socet_dtms). Su API publica un índice Parquet y un endpoint `items`. Usar la ventana de búsqueda **77.398° E a 77.403° E, 18.449° N a 18.456° N**, que contiene los dos controles. Buscar en los resultados el ID de origen `DTEEC_002387_1985_003798_1985_A01` y seleccionar su asset numérico de elevación. Confirmar en la ficha que corresponde a ese producto y guardar el ID y `href` del asset. La colección responde y el Item exacto aún no está verificado en esta sesión. [Consulta por área](https://stac.astrogeology.usgs.gov/api/collections/mro_hirise_socet_dtms/items?bbox=77.398,18.449,77.403,18.456&limit=10)
+2. Preferir el COG de elevación para leer por ventanas. Si el Item no está disponible, descargar el original `.IMG` del [índice HiRISE](https://www.uahirise.org/PDS/DTM/PSP/ORB_002300_002399/PSP_002387_1985_PSP_003798_1985/) o usar el [GeoTIFF TRN publicado por USGS](https://planetarymaps.usgs.gov/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif). Registrar en `gdalinfo -json` la proyección del archivo elegido, tamaño, máscara, valor NoData, unidad, escala y desplazamiento. El CRS indicado abajo aplica a las coordenadas de entrada del flujo ARD, tras comprobar que el producto ecuatorial usa el marco Marte 2015 planetocéntrico. Para el original o el mosaico TRN, comprobar el marco y radio de su propia etiqueta antes de transformar.
+3. Con GDAL y el COG ecuatorial elegido, ejecutar los comandos siguientes con el archivo local o con su URL HTTPS real precedida de `/vsicurl/` cuando el host admita lecturas por rango. El orden de entrada es longitud, latitud.
+
+```powershell
+$dtm = "ruta-al-COG.tif"
+gdalinfo -json "$dtm" > jezero-dtm-info.json
+gdallocationinfo -xml -l_srs IAU_2015:49900 "$dtm" 77.40143554 18.45068664
+gdallocationinfo -xml -l_srs IAU_2015:49900 "$dtm" 77.39911421 18.45363597
+```
+
+4. Para cada punto registrar columna, fila, valor bruto y estado de máscara. Si la banda tiene máscara, confirmar el píxel correspondiente (`gdal_translate -b mask,1 -srcwin COL FILA 1 1 -of XYZ entrada.tif mascara.xyz`). Un punto fuera de límites, una máscara inválida o un valor NoData se registra como faltante. Si la muestra es válida, aplicar `elevación = valor bruto × escala + desplazamiento` solo cuando corresponda. Si GDAL ya devolvió la salida `DescaledValue`, conservarla directamente. Las elevaciones de los informes de muestreo de Perseverance sirven de referencia contextual con su procedencia y datum.
+5. Cuando estén la base y las dos geometrías A/B, proyectarlas al mismo CRS y comprobarlas sobre la máscara del DTM. Acordar un ancho de corredor y reportar celdas válidas, total y primer tramo sin cobertura por ruta. El rectángulo de búsqueda STAC es una ayuda para encontrar el asset.
+
+Referencias de ejecución: [productos COG y escalas USGS](https://stac.astrogeology.usgs.gov/docs/data/mars/hirise_dtms/) · [gdallocationinfo](https://gdal.org/en/stable/programs/gdallocationinfo.html) · [gdal_translate](https://gdal.org/en/stable/programs/gdal_translate.html). La ventana de búsqueda y las coordenadas de los dos comandos se cotejaron con los controles PDS. Las invocaciones GDAL quedan pendientes de datos y herramientas.
+
 ## Revisión desde el visor
 
 | Contrato | Consume el visor | Acordar antes de implementar |
