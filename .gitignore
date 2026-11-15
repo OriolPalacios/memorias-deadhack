@@ -33,4 +33,4 @@ data/processed/
 
 
 # esto es para mi
-./.sol-orchestrator/
+/.sol-orchestrator/*
