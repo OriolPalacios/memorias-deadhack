@@ -181,7 +181,7 @@ function resolvePhaseTransition(
           id: `${route.id}-primary-observation`,
           phase: 'observing',
           title: `Observación principal simulada (${route.code})`,
-          note: 'Registro cronológico simulado; el contexto geomorfológico y térmico real sigue pendiente.',
+          note: 'Registro cronológico simulado asociado a evidencia contextual; no equivale a telemetría física real.',
           durationMin: route.primaryObservationMin,
           simulatedOnly: true,
         },
@@ -218,7 +218,7 @@ function resolvePhaseTransition(
           id: `${route.id}-extra-stop`,
           phase: 'extra_stop',
           title: `${baseline.extraStop.label} (${route.code})`,
-          note: 'Parada simulada completada; fotografía Hazcam y contexto ambiental real siguen pendientes.',
+          note: 'Parada extra simulada completada según tiempos predefinidos del escenario.',
           durationMin: baseline.extraStop.accessAndObservationMin,
           simulatedOnly: true,
         },
@@ -410,7 +410,13 @@ export function getNextSimulatedStepInfo(
   }
 }
 
-export function getMissionPhaseMeta(phase: SimulatedMissionPhase): SimulatedPhaseMeta {
+export function getMissionPhaseMeta(
+  phase: SimulatedMissionPhase,
+  baseline: MissionBaselineConfig = SIMULATED_MISSION_BASELINE,
+  selectedRouteId: RouteId = DEFAULT_ROUTE_ID,
+): SimulatedPhaseMeta {
+  const obsMin = baseline.routes[selectedRouteId].primaryObservationMin;
+  const extraMin = baseline.extraStop.accessAndObservationMin;
   switch (phase) {
     case 'planning':
       return {
@@ -430,8 +436,7 @@ export function getMissionPhaseMeta(phase: SimulatedMissionPhase): SimulatedPhas
       return {
         label: 'Observación principal',
         stepCaption: 'Fase 2 · estación principal',
-        guidance:
-          'Completa la ventana fija de observación (20 min) para alcanzar el punto de decisión.',
+        guidance: `Completa la ventana fija de observación (${obsMin} min) para alcanzar el punto de decisión.`,
       };
     case 'deciding':
       return {
@@ -444,8 +449,7 @@ export function getMissionPhaseMeta(phase: SimulatedMissionPhase): SimulatedPhas
       return {
         label: 'Parada extra simulada',
         stepCaption: 'Fase 4A · desvío adicional',
-        guidance:
-          'Trayecto adicional activo (+15 min). Completa la parada antes de iniciar el regreso.',
+        guidance: `Trayecto adicional activo (+${extraMin} min). Completa la parada antes de iniciar el regreso.`,
       };
     case 'returning':
       return {

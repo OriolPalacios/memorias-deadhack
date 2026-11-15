@@ -1,3 +1,4 @@
+import type { OptionEvaluation } from '../domain/autonomy.ts';
 import {
   getMissionPhaseMeta,
   getNextSimulatedStepInfo,
@@ -8,15 +9,22 @@ import {
 import {
   buildRouteProjection,
   SIMULATED_MISSION_BASELINE,
+  type MissionBaselineConstants,
   type RouteId,
 } from '../domain/scenario.ts';
 
 interface RouteSelectorPanelProps {
   readonly selectedRouteId: RouteId;
   readonly mission: SimulatedMissionState;
+  readonly baseline?: MissionBaselineConstants;
+  readonly scenarioId?: string | null;
+  readonly usingFallbackTimings?: boolean;
+  readonly scenarioError?: string | null;
+  readonly hasValidatedGeometry?: boolean;
   readonly onSelectRoute: (routeId: RouteId) => void;
   readonly onDispatchMissionEvent: (event: MissionEvent) => void;
   readonly onResetScenario: () => void;
+  readonly onRetryScenario?: () => void;
 }
 
 const ROUTE_IDS: readonly RouteId[] = ['A', 'B'];
@@ -34,20 +42,40 @@ function getPhaseToneClass(
   return 'neutral';
 }
 
+function formatBranchStatusSummary(evalData: OptionEvaluation): string {
+  switch (evalData.status) {
+    case 'meets_reserve':
+      return evalData.atReserveLimit ? 'en el límite exacto de reserva' : 'cumple reserva';
+    case 'below_reserve':
+      return `bajo reserva, déficit ${evalData.reserveDeficitMin ?? 'N/D'} min`;
+    case 'exhausted':
+      return `agotada, déficit ${evalData.reserveDeficitMin ?? 'N/D'} min`;
+    case 'unknown':
+      return 'sin datos suficientes';
+  }
+}
+
 export function RouteSelectorPanel({
   selectedRouteId,
   mission,
+  baseline = SIMULATED_MISSION_BASELINE,
+  scenarioId = null,
+  usingFallbackTimings = false,
+  scenarioError = null,
+  hasValidatedGeometry = false,
   onSelectRoute,
   onDispatchMissionEvent,
   onResetScenario,
+  onRetryScenario,
 }: RouteSelectorPanelProps) {
   const isRouteLocked = mission.phase !== 'planning';
-  const activeProjection = buildRouteProjection(
+  const activeProjection = buildRouteProjection(mission.selectedRouteId, baseline);
+  const phaseMeta = getMissionPhaseMeta(
+    mission.phase,
+    baseline,
     mission.selectedRouteId,
-    SIMULATED_MISSION_BASELINE,
   );
-  const phaseMeta = getMissionPhaseMeta(mission.phase);
-  const nextStep = getNextSimulatedStepInfo(mission, SIMULATED_MISSION_BASELINE);
+  const nextStep = getNextSimulatedStepInfo(mission, baseline);
   const reserveOutcome = getSimulatedMissionReserveOutcome(mission);
   const phaseTone = getPhaseToneClass(mission.phase, reserveOutcome.status);
 
@@ -62,9 +90,35 @@ export function RouteSelectorPanel({
           <span className="pill neutral">Simulada</span>
         </div>
         <span className="panel-meta">
-          {isRouteLocked ? 'Ruta bloqueada en curso' : 'Escenario previo'}
+          {usingFallbackTimings
+            ? 'Tiempos de respaldo'
+            : scenarioId
+              ? scenarioId
+              : isRouteLocked
+                ? 'Ruta bloqueada en curso'
+                : 'Escenario previo'}
         </span>
       </header>
+
+      {usingFallbackTimings ? (
+        <div className="scenario-fallback-banner" role="alert">
+          <p className="scenario-fallback-text">
+            <strong>Escenario real no disponible:</strong>{' '}
+            {scenarioError ?? 'Error al cargar el paquete del escenario.'} Se utilizan
+            tiempos de referencia de respaldo explícitamente simulados.
+          </p>
+          {onRetryScenario ? (
+            <button
+              type="button"
+              className="btn secondary btn-compact"
+              data-testid="retry-scenario-btn"
+              onClick={onRetryScenario}
+            >
+              Reintentar escenario
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <fieldset
         className="route-fieldset"
@@ -76,7 +130,7 @@ export function RouteSelectorPanel({
         </legend>
 
         {ROUTE_IDS.map((routeId) => {
-          const projection = buildRouteProjection(routeId, SIMULATED_MISSION_BASELINE);
+          const projection = buildRouteProjection(routeId, baseline);
           const { route } = projection;
           const isSelected = selectedRouteId === routeId;
 
@@ -196,7 +250,8 @@ export function RouteSelectorPanel({
               <span>Elegir regreso directo</span>
               <span className="mission-branch-meta num">
                 -{activeProjection.directPendingCostMin} min · termina en{' '}
-                {directEval.projectedAtBaseMin ?? 'N/D'} min (cumple reserva)
+                {directEval.projectedAtBaseMin ?? 'N/D'} min (
+                {formatBranchStatusSummary(directEval)})
               </span>
             </button>
 
@@ -211,8 +266,8 @@ export function RouteSelectorPanel({
               <span>Elegir parada extra</span>
               <span className="mission-branch-meta num">
                 -{activeProjection.extraPendingCostMin} min · termina en{' '}
-                {extraEval.projectedAtBaseMin ?? 'N/D'} min (bajo reserva, déficit{' '}
-                {extraEval.reserveDeficitMin ?? 'N/D'} min)
+                {extraEval.projectedAtBaseMin ?? 'N/D'} min (
+                {formatBranchStatusSummary(extraEval)})
               </span>
             </button>
           </div>
@@ -285,8 +340,9 @@ export function RouteSelectorPanel({
         ) : null}
 
         <p className="disabled-reason">
-          Pendiente científico: terreno DEM, geometrías A/B sobre el recorte real y capas
-          térmicas. Esta simulación valida exclusivamente tiempos y fases predefinidos.
+          {hasValidatedGeometry
+            ? 'Tiempos, rutas y marcador son parámetros simulados del escenario; la cobertura DEM verificada no certifica seguridad para una EVA real.'
+            : 'Esta simulación valida exclusivamente tiempos y fases predefinidos; no certifica seguridad para una EVA real.'}
         </p>
       </div>
     </section>

@@ -2,20 +2,14 @@
  * Consumer-side data integration seam (APP-06).
  *
  * Isolates the application shell from external NASA/USGS/HiRISE/THEMIS/MEDA
- * file formats, projections, grid layouts, and manifests while Issue #6 / #8
- * are still in progress.
+ * file formats, projections, grid layouts, and manifests.
  *
- * ADAPTER CONNECTION POINT:
- * When Lucian's frozen data contracts (Issue #6 / #8) are approved
- * and prepared assets exist, implement a dedicated adapter
- * (e.g. `src/data/externalBundleAdapter.ts`) that validates the frozen manifest,
- * converts coordinates into the accepted local scene frame (+X East, +Y Up, +Z South),
- * and passes a populated `SceneDataPort` into `<App dataPort={...} />`.
- *
- * This module intentionally performs NO network fetches, defines NO unapproved
- * external JSON manifest schema, invents NO coordinates/elevations/temperatures,
- * and uses NO silent parse defaults.
+ * `createPendingDataPort()` remains the pure synchronous baseline port with no
+ * network fetches; `jezeroLoader.ts` populates a live `SceneDataPort` when loading
+ * the local Jezero package (`demo/jezero/terrain.json`).
  */
+
+import type { ScenarioContextVariable } from './jezeroContracts.ts';
 
 export type DataLayerId =
   | 'terrain_dem'
@@ -27,7 +21,12 @@ export type DataLayerId =
 
 export type DataRequirementTier = 'required_mvp' | 'optional_mvp' | 'historical_context';
 
-export type DataLayerStatus = 'awaiting_contract' | 'ready';
+export type DataLayerStatus =
+  | 'awaiting_contract'
+  | 'loading'
+  | 'ready'
+  | 'unavailable'
+  | 'error';
 
 export interface DataLayerDescriptor<TPayload = unknown> {
   readonly id: DataLayerId;
@@ -37,30 +36,66 @@ export interface DataLayerDescriptor<TPayload = unknown> {
   readonly status: DataLayerStatus;
   readonly unavailableReason: string;
   readonly payload: TPayload | null;
+  readonly externalUrl?: string | null;
 }
 
-/** Opaque consumer view-model slots for future adapters (filled when ready). */
 export interface ReadyTerrainRef {
   readonly productId: string;
   readonly sourceAttribution: string;
+  readonly width: number;
+  readonly height: number;
+  readonly dxM: number;
+  readonly dyM: number;
+  readonly minElevationM: number;
+  readonly maxElevationM: number;
+  readonly verticalDatum: string;
+  readonly verticalExaggeration: number;
+  readonly validSamples: number;
+  readonly totalSamples: number;
+  readonly boundsXzM: readonly [number, number, number, number];
+}
+
+export interface ReadyRouteGeometriesRef {
+  readonly scenarioId: string;
+  readonly geometryVersion: string;
+  readonly movementCount: number;
+  readonly coverageVerified: boolean;
 }
 
 export interface ReadyThermalRef {
   readonly productId: string;
   readonly acquisitionContext: string;
+  readonly acquisitionDetail: string;
   readonly sourceAttribution: string;
+  readonly label: string;
+  readonly width: number;
+  readonly height: number;
+  readonly nativeResolutionMpp: number;
+  readonly validSamples: number;
+  readonly totalSamples: number;
+  readonly lowDN: number;
+  readonly highDN: number;
+  readonly minObservedDn: number | null;
+  readonly maxObservedDn: number | null;
 }
 
 export interface ReadySurfacePhotoRef {
   readonly title: string;
+  readonly productId: string;
   readonly capturedAt: string;
+  readonly captureSol: number | null;
   readonly credit: string;
+  readonly objectUrl: string;
+  readonly sourceUrl: string | null;
+  readonly locationUnverifiedNote: string;
 }
 
 export interface ReadyMedaContextRef {
   readonly siteLabel: string;
   readonly observedPeriod: string;
   readonly sourceAttribution: string;
+  readonly sourceUrl: string | null;
+  readonly variables: readonly ScenarioContextVariable[];
 }
 
 export interface SceneDataPort {

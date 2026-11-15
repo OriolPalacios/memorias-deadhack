@@ -2,7 +2,8 @@ interface HeaderBarProps {
   readonly productName: string;
   readonly missionTitle: string;
   readonly scientificContext: string;
-  readonly hasConnectedAssets: boolean;
+  readonly statusTone: 'pos' | 'warn' | 'neutral';
+  readonly statusLabel: string;
   readonly onResetScenario: () => void;
 }
 
@@ -10,7 +11,8 @@ export function HeaderBar({
   productName,
   missionTitle,
   scientificContext,
-  hasConnectedAssets,
+  statusTone,
+  statusLabel,
   onResetScenario,
 }: HeaderBarProps) {
   return (
@@ -51,10 +53,8 @@ export function HeaderBar({
       </div>
 
       <div className="topbar-right">
-        <span className="pill warn">
-          {hasConnectedAssets
-            ? 'Datos de misión disponibles'
-            : 'Simulación previa · Datos en espera'}
+        <span className={`pill ${statusTone}`} data-testid="topbar-status-pill">
+          {statusLabel}
         </span>
         <button
           type="button"

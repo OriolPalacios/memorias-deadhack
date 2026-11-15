@@ -21,7 +21,7 @@ export interface SimulatedRouteDefinition {
   readonly outboundMin: number;
   readonly primaryObservationMin: number;
   readonly directReturnMin: number;
-  readonly geographyStatus: 'pending_real_crop';
+  readonly geographyStatus: 'pending_real_crop' | 'validated_crop';
 }
 
 export interface ExtraStopDefinition {

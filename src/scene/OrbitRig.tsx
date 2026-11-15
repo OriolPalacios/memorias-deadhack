@@ -1,25 +1,33 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
+import { PerspectiveCamera } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import {
-  DEFAULT_ORBIT_CAMERA_POSITION,
-  DEFAULT_ORBIT_TARGET,
-} from './orbitDefaults.ts';
+import type { CameraRigPreset } from './orbitDefaults.ts';
 
 interface OrbitRigProps {
+  readonly preset: CameraRigPreset;
   readonly resetSignal: number;
+  readonly focusSignal: number;
   readonly reducedMotion: boolean;
   readonly onUserOrbit: () => void;
 }
 
 /**
- * Wraps Three.js OrbitControls inside React Three Fiber with explicit camera reset
- * and reduced-motion support.
+ * Wraps Three.js OrbitControls inside React Three Fiber with explicit camera reset,
+ * terrain bounds fitting, science-target centering, and reduced-motion support.
  */
-export function OrbitRig({ resetSignal, reducedMotion, onUserOrbit }: OrbitRigProps) {
+export function OrbitRig({
+  preset,
+  resetSignal,
+  focusSignal,
+  reducedMotion,
+  onUserOrbit,
+}: OrbitRigProps) {
   const { camera, gl } = useThree();
   const controlsRef = useRef<OrbitControls | null>(null);
   const lastResetRef = useRef<number>(resetSignal);
+  const lastFocusRef = useRef<number>(focusSignal);
+  const lastModeKeyRef = useRef<string>('');
   const onUserOrbitRef = useRef(onUserOrbit);
   const isProgrammaticResetRef = useRef(false);
 
@@ -27,24 +35,15 @@ export function OrbitRig({ resetSignal, reducedMotion, onUserOrbit }: OrbitRigPr
     onUserOrbitRef.current = onUserOrbit;
   }, [onUserOrbit]);
 
+  // Mount controls once for the active camera/renderer
   useEffect(() => {
     const domElement = gl.domElement;
     const controls = new OrbitControls(camera, domElement);
-    controls.enableDamping = !reducedMotion;
     controls.dampingFactor = 0.08;
     controls.enablePan = true;
-    controls.keyPanSpeed = 12;
     controls.keyRotateSpeed = 2.5;
-    controls.minDistance = 2.6;
-    controls.maxDistance = 14;
     controls.maxPolarAngle = Math.PI * 0.485;
-    controls.target.set(
-      DEFAULT_ORBIT_TARGET[0],
-      DEFAULT_ORBIT_TARGET[1],
-      DEFAULT_ORBIT_TARGET[2],
-    );
-    controls.update();
-    controls.saveState();
+
     controls.listenToKeyEvents(domElement);
 
     const handleStart = () => {
@@ -70,8 +69,9 @@ export function OrbitRig({ resetSignal, reducedMotion, onUserOrbit }: OrbitRigPr
       controls.dispose();
       controlsRef.current = null;
     };
-  }, [camera, gl, reducedMotion]);
+  }, [camera, gl]);
 
+  // Keep damping synced with reduced-motion preference
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls) {
@@ -80,6 +80,44 @@ export function OrbitRig({ resetSignal, reducedMotion, onUserOrbit }: OrbitRigPr
     controls.enableDamping = !reducedMotion;
   }, [reducedMotion]);
 
+  // Apply camera bounds, clipping planes, and overview fit on mount or terrain preset change
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) {
+      return;
+    }
+
+    const controlledCamera = controls.object;
+    if (controlledCamera instanceof PerspectiveCamera) {
+      controlledCamera.near = preset.near;
+      controlledCamera.far = preset.far;
+      controlledCamera.updateProjectionMatrix();
+    }
+
+    const modeChanged = lastModeKeyRef.current !== preset.modeKey;
+    lastModeKeyRef.current = preset.modeKey;
+
+    isProgrammaticResetRef.current = true;
+    const previousDamping = controls.enableDamping;
+    controls.enableDamping = false;
+    controls.minDistance = preset.minDistance;
+    controls.maxDistance = preset.maxDistance;
+    controls.keyPanSpeed = preset.keyPanSpeed;
+
+    if (modeChanged || controls.target.lengthSq() === 0) {
+      controlledCamera.position.set(...preset.overviewPosition);
+      controls.target.set(...preset.overviewTarget);
+      controls.update();
+      controls.saveState();
+    } else {
+      controls.update();
+    }
+
+    controls.enableDamping = previousDamping;
+    isProgrammaticResetRef.current = false;
+  }, [preset]);
+
+  // Handle explicit view reset (returns to saved overview fit)
   useEffect(() => {
     if (resetSignal === lastResetRef.current) {
       return;
@@ -91,22 +129,43 @@ export function OrbitRig({ resetSignal, reducedMotion, onUserOrbit }: OrbitRigPr
       isProgrammaticResetRef.current = true;
       const previousDamping = controls.enableDamping;
       controls.enableDamping = false;
-      controls.reset();
+      camera.position.set(...preset.overviewPosition);
+      controls.target.set(...preset.overviewTarget);
+      controls.update();
+      controls.saveState();
       controls.enableDamping = previousDamping;
       isProgrammaticResetRef.current = false;
     } else {
-      camera.position.set(
-        DEFAULT_ORBIT_CAMERA_POSITION[0],
-        DEFAULT_ORBIT_CAMERA_POSITION[1],
-        DEFAULT_ORBIT_CAMERA_POSITION[2],
-      );
-      camera.lookAt(
-        DEFAULT_ORBIT_TARGET[0],
-        DEFAULT_ORBIT_TARGET[1],
-        DEFAULT_ORBIT_TARGET[2],
-      );
+      camera.position.set(...preset.overviewPosition);
+      camera.lookAt(...preset.overviewTarget);
     }
-  }, [camera, resetSignal]);
+  }, [camera, preset, resetSignal]);
+
+  // Handle "Centrar en Enchanted Lake" without overwriting saved overview fit
+  useEffect(() => {
+    if (focusSignal === lastFocusRef.current) {
+      return;
+    }
+    lastFocusRef.current = focusSignal;
+    if (!preset.focusPosition || !preset.focusTarget) {
+      return;
+    }
+
+    const controls = controlsRef.current;
+    if (controls) {
+      isProgrammaticResetRef.current = true;
+      const previousDamping = controls.enableDamping;
+      controls.enableDamping = false;
+      camera.position.set(...preset.focusPosition);
+      controls.target.set(...preset.focusTarget);
+      controls.update();
+      controls.enableDamping = previousDamping;
+      isProgrammaticResetRef.current = false;
+    } else {
+      camera.position.set(...preset.focusPosition);
+      camera.lookAt(...preset.focusTarget);
+    }
+  }, [camera, focusSignal, preset]);
 
   useFrame(() => {
     const controls = controlsRef.current;
