@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "project": "DeadHack",
+  "configuration_kind": "declarative_operating_contract",
+  "current_mode": "planning",
+  "team_assignments_file": "harness/team.json",
+  "spec": {
+    "path": "docs/SPEC.md",
+    "revision": "0.3",
+    "status": "accepted",
+    "approval_source": "explicit_user_message_2026-11-15",
+    "repository_integration_status": "pending_pr_review",
+    "implementation_enabled": true,
+    "implementation_prerequisites": [
+      "assigned_issue",
+      "isolated_worktree",
+      "relevant_task_contract_accepted",
+      "runtime_permissions_preflight"
+    ]
+  },
+  "demo": {
+    "deadline": "2026-11-15T22:00:00-05:00",
+    "timezone": "America/Lima",
+    "human_team_size": 3,
+    "terrain_3d_required": true
+  },
+  "hosting": {
+    "status": "deferred_by_user",
+    "required_for_local_development": false
+  },
+  "coordination": {
+    "task_authority": "github_issues_and_pull_requests",
+    "shared_memory": "memorias/",
+    "local_untracked_state": ".sol-orchestrator/",
+    "one_writer_per_worktree": true,
+    "one_primary_owner_per_issue": true,
+    "automatic_external_agent_dispatch": false,
+    "automatic_merge": false,
+    "ultra_enabled": false
+  },
+  "roles": [
+    {
+      "id": "sol-lead",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "max",
+      "runtime": "codex_or_compatible_operator_environment",
+      "owns": ["creative_direction", "architecture", "scope", "contracts", "semantic_review"],
+      "instructions": "harness/ROLES.md#sol"
+    },
+    {
+      "id": "gemini-lead",
+      "model": "gemini-4-hydrogen-xhigh",
+      "reasoning_effort": "xhigh",
+      "runtime": "antigravity_agy",
+      "owns": ["repository_grounding", "implementation", "data_transforms", "mechanical_validation"],
+      "parent_leads_per_repository": 1,
+      "instructions": "harness/ROLES.md#gemini"
+    },
+    {
+      "id": "terra-qa",
+      "model": "gpt-6.1-terra",
+      "reasoning_effort": "max",
+      "runtime": "codex_or_compatible_operator_environment",
+      "owns": ["independent_qa", "browser_validation", "evidence", "regression_review"],
+      "instructions": "harness/ROLES.md#terra"
+    }
+  ],
+  "model_policy": {
+    "silent_fallback_allowed": false,
+    "missing_capability": "report_and_resolve_with_operator",
+    "external_contributor_policy": "declare_runtime_model_and_issue_scope; preserve_contracts; do_not_silently_replace_requested_role"
+  }
+}

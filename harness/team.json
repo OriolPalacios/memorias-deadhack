@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-11-15",
+  "assignment_kind": "default_ownership_by_workstream",
+  "live_task_authority": "github_issues_and_pull_requests",
+  "reported_team_size": 3,
+  "current_operator_ids": ["oriol", "lucian"],
+  "operators": [
+    {
+      "id": "oriol",
+      "display_name": "Oriol",
+      "github_username": "OriolPalacios"
+    },
+    {
+      "id": "lucian",
+      "display_name": "Lucian",
+      "github_username": "LucianFBC"
+    }
+  ],
+  "workstreams": [
+    {
+      "id": "data-science",
+      "name": "Datos y ciencia",
+      "owner_operator_id": "lucian",
+      "implementation_role_id": "gemini-lead",
+      "qa_role_id": "terra-qa",
+      "responsibilities": ["data_grounding", "data_preparation", "data_contracts"],
+      "coordination_issue_url": "https://github.com/OriolPalacios/memorias-deadhack/issues/6",
+      "active_external_task": {
+        "scope": ["data_grounding", "contract_review"],
+        "runtime": "codex",
+        "model": null,
+        "reasoning_effort": null
+      }
+    },
+    {
+      "id": "scene-ui",
+      "name": "Escena 3D e interfaz",
+      "owner_operator_id": "oriol",
+      "implementation_role_id": "gemini-lead",
+      "qa_role_id": "terra-qa"
+    },
+    {
+      "id": "domain-demo",
+      "name": "Dominio, integración y demo",
+      "owner_operator_id": "oriol",
+      "implementation_role_id": "gemini-lead",
+      "qa_role_id": "terra-qa"
+    }
+  ],
+  "coordination": {
+    "decision_operator_id": "oriol",
+    "integration_operator_id": "oriol",
+    "demo_operator_id": "oriol",
+    "architecture_role_id": "sol-lead",
+    "assignment_does_not_authorize_merge_push_or_deployment": true
+  }
+}
