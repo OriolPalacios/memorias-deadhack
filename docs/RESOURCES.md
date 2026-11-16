@@ -12,7 +12,7 @@
 | R-02 | [NASA Worldview](https://worldview.earthdata.nasa.gov/) | Referencia de interacción de capas, leyendas y tiempo. Es un visor terrestre, no una fuente de terreno o clima de Marte. |
 | R-03 | [Curiosity’s Proposed Path up Mount Sharp](https://science.nasa.gov/resource/curiositys-proposed-path-up-mount-sharp/) | Referencia visual de ruta científica y relieve. Corresponde a Gale/Mount Sharp; no es geometría ni terreno de Jezero. |
 | R-04 | [USGS — Interactive Maps: Mars](https://astrogeology-usgs.hub.arcgis.com/pages/interactive-maps-mars) | Entrada a productos cartográficos/geológicos y metadatos. Seleccionar productos con cobertura y escala adecuadas. |
-| R-05 | [NASA/JPL Mars Trek](https://trek.nasa.gov/mars/) | Descubrir capas ópticas/topográficas y los identificadores de productos. El enlace del usuario usa una vista global; todavía no define el recorte de demo. |
+| R-05 | [NASA/JPL Mars Trek](https://trek.nasa.gov/mars/) | Consultar capas y descargar teselas del recorte de Jezero con la [guía de la API](MARS-TREK-API.md). |
 
 Los recursos de referencia visual no se presentan como datasets consumidos. En la entrega se documenta exactamente qué producto de R-04/R-05 y qué imagen de R-01 se utilizaron. No es necesario conectar cinco servicios durante la demo para aprovechar estos recursos.
 
