@@ -1,0 +1,162 @@
+{
+  "contract": "terrain/v1",
+  "id": "jezero-dem-20261115-v1",
+  "scenarioAsset": "scenario.json",
+  "frame": {
+    "id": "mars-eqc-jezero-v1",
+    "projection": "+proj=eqc +lat_ts=18.45 +lat_0=18.45 +lon_0=77.4 +R=3396190 +x_0=0 +y_0=0 +units=m +type=crs",
+    "latitudeType": "planetocentric",
+    "longitudeDomain": "0_to_360_east",
+    "sceneOriginProjectedM": [
+      0,
+      0
+    ],
+    "heightOriginM": -2520,
+    "verticalExaggeration": 1,
+    "verticalDatum": "Mars areoid adjusted to MOLA, preserved from the HiRISE DTM"
+  },
+  "grid": {
+    "width": 256,
+    "height": 256,
+    "extentM": [
+      -150,
+      -50,
+      250,
+      350
+    ]
+  },
+  "heightAsset": {
+    "path": "height.f32",
+    "format": "float32-le",
+    "byteLength": 262144,
+    "sha256": "20e2c3a9a9657762c404198af7c01ddc7a60f9d59e14ea779b37ab0234dd66f3"
+  },
+  "heightMaskAsset": {
+    "path": "height-mask.u8",
+    "format": "uint8",
+    "byteLength": 65536,
+    "sha256": "916b144867c340614f515c7b0e5415c74832d899c05264ded2a277a6e81d81ff"
+  },
+  "heightSourceId": "hirise-jezero",
+  "elevationLegend": {
+    "unit": "m",
+    "minM": -2536.40673828125,
+    "maxM": -2457.3974609375
+  },
+  "coverage": {
+    "validSamples": 65536,
+    "totalSamples": 65536
+  },
+  "textureAsset": null,
+  "thermal": {
+    "sourceId": "mc13_syrtis_major_nir",
+    "asset": {
+      "path": "thermal.png",
+      "format": "png-rgba8",
+      "byteLength": 114,
+      "sha256": "cc3fe1a1f1282b0e3fbde55f0c75ee08fda3ade2d50164de43de12b2f2d8dedf"
+    },
+    "grid": {
+      "width": 4,
+      "height": 4,
+      "extentM": [
+        -150,
+        -50,
+        250,
+        350
+      ]
+    },
+    "nativeResolutionMpp": 100.00000000000003,
+    "legend": {
+      "label": "IR nocturno — intensidad relativa",
+      "scale": "relative_ir_dn",
+      "lowDN": 0,
+      "highDN": 255
+    },
+    "acquisition": {
+      "kind": "mosaic",
+      "illumination": "night",
+      "startUtc": null,
+      "endUtc": null,
+      "missingReason": "stac_interval_inverted_and_provenance_has_no_observation_dates"
+    },
+    "coverage": {
+      "validSamples": 16,
+      "totalSamples": 16
+    }
+  },
+  "sources": [
+    {
+      "id": "hirise-jezero",
+      "kind": "hirise-dtm",
+      "productId": "DTEEC_002387_1985_003798_1985_A01",
+      "url": "https://www.uahirise.org/PDS/DTM/PSP/ORB_002300_002399/PSP_002387_1985_PSP_003798_1985/DTEEC_002387_1985_003798_1985_A01.IMG",
+      "format": "PDS3 PC_REAL Float32 little-endian",
+      "nativeResolutionMpp": 1.0096476466229,
+      "nativeShape": [
+        11538,
+        6934
+      ],
+      "labelSha256": "3569808f0538208a4bac4ce1960f165974417b572223c3db3bc0e71e11ea973b",
+      "rangedBytes": [
+        216257592,
+        227268783
+      ],
+      "rangeSha256": "eb677c4335bac2d71a6cadad4260da260952c260021f5aa482d3c09d8dbbec95",
+      "nativePixelWindow": [
+        3027,
+        7796,
+        3430,
+        8192
+      ],
+      "nativeValid": 160388,
+      "nativeTotal": 160388,
+      "projection": {
+        "type": "spherical eqc",
+        "radiusM": 3394839.8133163,
+        "lon0": 77.41,
+        "latTs": 15.0,
+        "latitudeType": "planetocentric",
+        "longitudeDomain": "0_to_360_east"
+      },
+      "verticalDatum": "Mars areoid adjusted to MOLA, preserved from the HiRISE DTM",
+      "unit": "m",
+      "valueScale": 1.0,
+      "valueOffset": 0.0,
+      "missingBits": "0xFF7FFFFB",
+      "mission": "Mars Reconnaissance Orbiter",
+      "instrument": "HiRISE",
+      "credit": "NASA / JPL-Caltech / University of Arizona",
+      "referenceUrl": "https://hirise.lpl.arizona.edu/dtm/PSP_002387_1985"
+    },
+    {
+      "id": "mc13_syrtis_major_nir",
+      "kind": "themis-controlled-nighttime-infrared-mosaic",
+      "productId": "mc13_syrtis_major_nir",
+      "revision": "0572d13e586adfc9bcbf62b2f08dd4a8-56",
+      "url": "https://astrogeo-ard.s3.us-west-2.amazonaws.com/mars/mo/themis/controlled_mosaics/mc13_syrtis_major_nir/mc13_syrtis_major_nir.tif",
+      "stacItemUrl": "https://stac.astrogeology.usgs.gov/api/collections/mo_themis_controlled_mosaics/items/mc13_syrtis_major_nir",
+      "stacSha256": "e29faf131b9a4b8b8d009329b41ad494858ae8187ea794714139ef307acb776b",
+      "documentationUrl": "https://stac.astrogeology.usgs.gov/docs/data/mars/themis_controlled_mosaics/",
+      "accessedHttpDate": "Sun, 15 Nov 2026 22:28:15 GMT",
+      "credit": "NASA Mars Odyssey / USGS Astrogeology Science Center",
+      "license": "CC0-1.0",
+      "mission": "Mars Odyssey",
+      "instrument": "Thermal Emission Imaging System (THEMIS)",
+      "nativeResolutionMpp": 100.00000000000003,
+      "crs": "PROJCS[\"Mars (2015) - Sphere / Ocentric / Equirectangular, clon = 0\",GEOGCS[\"Mars (2015) - Sphere / Ocentric\",DATUM[\"Mars (2015) - Sphere\",SPHEROID[\"Mars (2015) - Sphere\",3396190,0]],PRIMEM[\"Reference Meridian\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Equirectangular\"],PARAMETER[\"standard_parallel_1\",0],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+      "verticalDatum": null,
+      "scale": 1,
+      "offset": 0,
+      "noData": 0,
+      "coverage": {
+        "sourceShapeRowColumn": [
+          17783,
+          26674
+        ],
+        "targetWindowValidSamples": 16,
+        "targetWindowTotalSamples": 16
+      }
+    }
+  ]
+}

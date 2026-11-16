@@ -1,0 +1,200 @@
+{
+  "geometryVersion": "jezero-geometry-proposal-20261115-1",
+  "status": "proposed_for_data_coverage_check_not_accepted_or_validated",
+  "note": "Escenario simulado. No es un paquete scenario/v1 completo, una traza del rover ni una ruta EVA validada. Los anclajes se calculan desde los controles geográficos publicados por Lucian en PR10; no georreferencian la fotografía.",
+  "frame": {
+    "id": "mars-eqc-jezero-v1",
+    "projection": "+proj=eqc +lat_ts=18.45 +lat_0=18.45 +lon_0=77.4 +R=3396190 +x_0=0 +y_0=0 +units=m +type=crs",
+    "latitudeType": "planetocentric",
+    "longitudeDomain": "0_to_360_east",
+    "sceneOriginProjectedM": [
+      0,
+      0
+    ],
+    "heightOriginM": -2520,
+    "verticalExaggeration": 1,
+    "verticalDatum": "Preservar el areoide ajustado a MOLA del DTM fuente; confirmar el nombre exacto al exportar."
+  },
+  "gridProposal": {
+    "extentM": [
+      -150,
+      -50,
+      250,
+      350
+    ],
+    "terrain": {
+      "width": 256,
+      "height": 256
+    },
+    "thermal": {
+      "width": 4,
+      "height": 4
+    },
+    "note": "Bordes exteriores, norte arriba. Pasos derivados 1.5625 m DEM y 100 m IR; no sustituyen la resolución nativa. Ajustables con nueva geometryVersion si la cobertura lo exige."
+  },
+  "coverageProposal": {
+    "bufferRadiusM": 5,
+    "horizontalControlToleranceM": 1.5625,
+    "endpointToleranceM": 0.01,
+    "required": "Comprobar el corredor completo de cada movimiento y la continuidad sobre triángulos válidos. Reportar huecos/fuera de cobertura; no interpolarlos como terreno observado."
+  },
+  "budgetMin": 120,
+  "reserveMin": 20,
+  "base": {
+    "id": "base",
+    "xzM": [
+      -100,
+      -240
+    ],
+    "simulated": true
+  },
+  "stops": [
+    {
+      "id": "science",
+      "xzM": [
+        80.718,
+        -40.7
+      ],
+      "simulated": true,
+      "anchorControl": "Mageik",
+      "anchorLonLat": [
+        77.40143554,
+        18.45068664
+      ]
+    },
+    {
+      "id": "extra-stop",
+      "xzM": [
+        -49.806,
+        -215.521
+      ],
+      "simulated": true,
+      "anchorControl": "Kukaklek",
+      "anchorLonLat": [
+        77.39911421,
+        18.45363597
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "id": "A",
+      "simulated": true,
+      "outbound": {
+        "eventId": "a_outbound",
+        "minutes": 35,
+        "fromId": "base",
+        "toId": "science",
+        "pathXzM": [
+          [
+            -100,
+            -240
+          ],
+          [
+            -40,
+            -180
+          ],
+          [
+            20,
+            -110
+          ],
+          [
+            80.718,
+            -40.7
+          ]
+        ]
+      }
+    },
+    {
+      "id": "B",
+      "simulated": true,
+      "outbound": {
+        "eventId": "b_outbound",
+        "minutes": 45,
+        "fromId": "base",
+        "toId": "science",
+        "pathXzM": [
+          [
+            -100,
+            -240
+          ],
+          [
+            150,
+            -260
+          ],
+          [
+            150,
+            -100
+          ],
+          [
+            80.718,
+            -40.7
+          ]
+        ]
+      }
+    }
+  ],
+  "shared": {
+    "observe": {
+      "eventId": "observe_science",
+      "minutes": 20,
+      "stopId": "science"
+    },
+    "extra": {
+      "eventId": "reach_and_observe_extra",
+      "minutes": 15,
+      "fromId": "science",
+      "toId": "extra-stop",
+      "pathXzM": [
+        [
+          80.718,
+          -40.7
+        ],
+        [
+          10,
+          -130
+        ],
+        [
+          -49.806,
+          -215.521
+        ]
+      ]
+    },
+    "returnAfterExtra": {
+      "eventId": "return_after_extra",
+      "minutes": 35,
+      "fromId": "extra-stop",
+      "toId": "base",
+      "pathXzM": [
+        [
+          -49.806,
+          -215.521
+        ],
+        [
+          -100,
+          -240
+        ]
+      ]
+    },
+    "direct": {
+      "eventId": "return_direct",
+      "minutes": 30,
+      "fromId": "science",
+      "toId": "base",
+      "pathXzM": [
+        [
+          80.718,
+          -40.7
+        ],
+        [
+          -30,
+          -80
+        ],
+        [
+          -100,
+          -240
+        ]
+      ]
+    }
+  }
+}
