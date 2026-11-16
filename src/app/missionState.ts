@@ -55,6 +55,7 @@ export function missionShellReducer(
   state: MissionShellState,
   action: MissionShellAction,
   fallbackBaseline: MissionBaselineConfig = SIMULATED_MISSION_BASELINE,
+  canStartMission: boolean = true,
 ): MissionShellState {
   switch (action.type) {
     case 'select_route': {
@@ -77,6 +78,9 @@ export function missionShellReducer(
       };
     }
     case 'mission_event': {
+      if (action.event.type === 'start_mission' && !canStartMission) {
+        return state;
+      }
       const baseline = action.baseline ?? fallbackBaseline;
       const nextMission = transitionSimulatedMission(
         state.mission,
@@ -135,16 +139,13 @@ export function missionShellReducer(
       if (state.mission.phase !== 'planning' || state.mission.appliedEvents.length > 0) {
         return state;
       }
-      if (
-        state.mission.initialBudgetMin === baseline.initialBudgetMin &&
-        state.mission.reserveMin === baseline.reserveMin &&
-        state.mission.remainingMin === baseline.initialBudgetMin
-      ) {
-        return state;
-      }
+      const nextInitial = createInitialSimulatedMissionState(
+        state.selectedRouteId,
+        baseline,
+      );
       return {
         ...state,
-        mission: createInitialSimulatedMissionState(state.selectedRouteId, baseline),
+        mission: nextInitial,
       };
     }
     case 'set_webgl_status':

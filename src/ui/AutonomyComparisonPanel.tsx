@@ -13,6 +13,7 @@ interface AutonomyComparisonPanelProps {
   readonly inspectedOptionId: DecisionOptionId | null;
   readonly onInspectOption: (optionId: DecisionOptionId) => void;
   readonly mission?: SimulatedMissionState;
+  readonly configPending?: boolean;
 }
 
 function getStatusPillProps(evaluation: OptionEvaluation): {
@@ -131,15 +132,20 @@ export function AutonomyComparisonPanel({
   inspectedOptionId,
   onInspectOption,
   mission,
+  configPending = false,
 }: AutonomyComparisonPanelProps) {
   const { evaluation } = projection;
   const { extra, direct } = evaluation.options;
-  const recBadge = getRecommendationBadge(evaluation.reasonCode);
+  const recBadge = configPending
+    ? { label: 'Esperando configuración', toneClass: 'neutral' as const }
+    : getRecommendationBadge(evaluation.reasonCode);
   const checkpointReached =
     mission !== undefined && mission.checkpointAvailableMin !== null;
   const displayedCheckpointMin =
     mission?.checkpointAvailableMin ?? projection.availableAtCheckpointMin;
-  const headerMeta = getComparisonMetaLabel(mission);
+  const headerMeta = configPending
+    ? 'Validando escenario antes de proyectar'
+    : getComparisonMetaLabel(mission);
 
   const optionRows: ReadonlyArray<{
     readonly id: DecisionOptionId;
@@ -177,12 +183,12 @@ export function AutonomyComparisonPanel({
         <span className={`pill ${recBadge.toneClass}`}>{recBadge.label}</span>
       </header>
 
-      {/* Explicitly separates initial 120 min, checkpoint projected 65/55 min, and target reserve 20 min */}
+      {/* Explicitly separates initial budget, checkpoint remaining, and target reserve */}
       <div className="kpis" role="region" aria-label="Horizontes de tiempo simulados">
         <div className="kpi">
           <div className="kpi-label">Presupuesto inicial</div>
           <div className="kpi-value num">
-            {projection.initialBudgetMin} <small>min</small>
+            {configPending ? '—' : projection.initialBudgetMin} <small>min</small>
           </div>
           <div className="kpi-sub">Simulado al partir</div>
         </div>
@@ -191,30 +197,34 @@ export function AutonomyComparisonPanel({
             {checkpointReached ? 'Fijado al decidir' : 'Disponible en decisión'}
           </div>
           <div className="kpi-value num">
-            {displayedCheckpointMin ?? '—'} <small>min</small>
+            {configPending ? '—' : (displayedCheckpointMin ?? '—')} <small>min</small>
           </div>
           <div className="kpi-sub num">
-            {mission && mission.phase !== 'planning'
-              ? `Cruce tras ${projection.consumedBeforeDecisionMin} min (saldo actual: ${mission.remainingMin} min)`
-              : `Proyección tras ${projection.consumedBeforeDecisionMin} min (ida + obs.)`}
+            {configPending
+              ? 'Esperando parámetros del escenario'
+              : mission && mission.phase !== 'planning'
+                ? `Cruce tras ${projection.consumedBeforeDecisionMin} min (saldo actual: ${mission.remainingMin} min)`
+                : `Proyección tras ${projection.consumedBeforeDecisionMin} min (ida + obs.)`}
           </div>
         </div>
         <div className="kpi">
           <div className="kpi-label">Reserva objetivo</div>
           <div className="kpi-value num">
-            {projection.reserveMin} <small>min</small>
+            {configPending ? '—' : projection.reserveMin} <small>min</small>
           </div>
           <div className="kpi-sub">Mínimo exigido al volver</div>
         </div>
       </div>
 
-      {/* Signature 20-minute return-reserve marker chart */}
-      <ReserveComparisonChart
-        extra={extra}
-        direct={direct}
-        reserveMin={projection.reserveMin}
-        availableAtCheckpointMin={projection.availableAtCheckpointMin}
-      />
+      {/* Signature return-reserve marker chart */}
+      {!configPending ? (
+        <ReserveComparisonChart
+          extra={extra}
+          direct={direct}
+          reserveMin={projection.reserveMin}
+          availableAtCheckpointMin={projection.availableAtCheckpointMin}
+        />
+      ) : null}
 
       {/* Tabular numeric breakdown with right-aligned tabular figures */}
       <div className="table-wrap">
@@ -239,7 +249,9 @@ export function AutonomyComparisonPanel({
           </thead>
           <tbody>
             {optionRows.map((row) => {
-              const pill = getStatusPillProps(row.evalData);
+              const pill = configPending
+                ? { label: 'En espera', toneClass: 'neutral' as const }
+                : getStatusPillProps(row.evalData);
               const isInspected = inspectedOptionId === row.id;
               return (
                 <tr
@@ -256,22 +268,22 @@ export function AutonomyComparisonPanel({
                     >
                       <span className="row-option-name">{row.title}</span>
                       <span className="sub">
-                        {row.breakdown}
-                        {mission?.chosenBranch === row.id ? ' · Rama seleccionada' : ''}
+                        {configPending ? 'Pendiente de escenario' : row.breakdown}
+                        {mission?.chosenBranch === row.id ? ' · Rama elegida' : ''}
                       </span>
                     </button>
                   </td>
                   <td className="n num" data-label="Coste">
-                    {formatMin(row.evalData.pendingCostMin)}
+                    {configPending ? '—' : formatMin(row.evalData.pendingCostMin)}
                   </td>
                   <td className="n num" data-label="En base">
-                    {formatMin(row.evalData.projectedAtBaseMin)}
+                    {configPending ? '—' : formatMin(row.evalData.projectedAtBaseMin)}
                   </td>
                   <td className="n num" data-label="Margen">
-                    {formatSignedMin(row.evalData.reserveDeltaMin)}
+                    {configPending ? '—' : formatSignedMin(row.evalData.reserveDeltaMin)}
                   </td>
                   <td className="n num" data-label="Déficit">
-                    {formatMin(row.evalData.reserveDeficitMin)}
+                    {configPending ? '—' : formatMin(row.evalData.reserveDeficitMin)}
                   </td>
                   <td className="cell-status" data-label="Estado">
                     <span className={`pill ${pill.toneClass}`}>{pill.label}</span>
@@ -286,9 +298,11 @@ export function AutonomyComparisonPanel({
       {/* Recommendation reason and shortfall callout */}
       <div className="recommendation-box" role="status" aria-live="polite">
         <p className="recommendation-text">
-          {describeRecommendationReason(projection)}
+          {configPending
+            ? 'Esperando validación de scenario.json para proyectar autonomía y recomendación.'
+            : describeRecommendationReason(projection)}
         </p>
-        {inspectedOption && (
+        {!configPending && inspectedOption ? (
           <p className="inspected-detail num">
             Inspección ({inspectedOption.title}):{' '}
             {projection.availableAtCheckpointMin ?? '—'} min disponibles −{' '}
@@ -297,7 +311,7 @@ export function AutonomyComparisonPanel({
             presupuesto {formatMin(inspectedOption.evalData.budgetDeficitMin)}).{' '}
             {renderStatusDescription(inspectedOption.evalData.status)}
           </p>
-        )}
+        ) : null}
       </div>
     </section>
   );

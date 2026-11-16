@@ -227,6 +227,10 @@ export interface DrapedPoint {
   readonly elevationM: number;
 }
 
+export interface DrapedPose extends DrapedPoint {
+  readonly yawRad: number;
+}
+
 export interface DrapedPolylineResult {
   readonly runs: readonly (readonly DrapedPoint[])[];
   readonly hasCoverageGap: boolean;
@@ -1234,36 +1238,165 @@ export function sampleTerrainAtXz(
   const clampedU = Math.max(0, Math.min(grid.width - 1, uCol));
   const clampedV = Math.max(0, Math.min(grid.height - 1, vRow));
 
-  const col = Math.min(grid.width - 2, Math.max(0, Math.floor(clampedU)));
-  const row = Math.min(grid.height - 2, Math.max(0, Math.floor(clampedV)));
-  const s = clampedU - col;
-  const t = clampedV - row;
+  const maxCol = grid.width - 2;
+  const maxRow = grid.height - 2;
+  const baseCol = Math.min(maxCol, Math.max(0, Math.floor(clampedU)));
+  const baseRow = Math.min(maxRow, Math.max(0, Math.floor(clampedV)));
 
-  const primary = sampleQuadAt(grid, row, col, s, t, x, z);
-  if (primary) {
-    return primary;
+  const candidateCols: number[] = [baseCol];
+  const nearRoundU = Math.round(clampedU);
+  if (Math.abs(clampedU - nearRoundU) <= eps) {
+    if (nearRoundU - 1 >= 0 && nearRoundU - 1 <= maxCol && nearRoundU - 1 !== baseCol) {
+      candidateCols.push(nearRoundU - 1);
+    }
+    if (nearRoundU >= 0 && nearRoundU <= maxCol && nearRoundU !== baseCol) {
+      candidateCols.push(nearRoundU);
+    }
   }
 
-  // If the point falls exactly on a shared grid line where one neighbor quad has a hole
-  // but the adjacent quad contains a valid shared edge/vertex, inspect the adjacent quad.
-  if (s <= eps && col > 0) {
-    const left = sampleQuadAt(grid, row, col - 1, 1, t, x, z);
-    if (left) return left;
+  const candidateRows: number[] = [baseRow];
+  const nearRoundV = Math.round(clampedV);
+  if (Math.abs(clampedV - nearRoundV) <= eps) {
+    if (nearRoundV - 1 >= 0 && nearRoundV - 1 <= maxRow && nearRoundV - 1 !== baseRow) {
+      candidateRows.push(nearRoundV - 1);
+    }
+    if (nearRoundV >= 0 && nearRoundV <= maxRow && nearRoundV !== baseRow) {
+      candidateRows.push(nearRoundV);
+    }
   }
-  if (s >= 1 - eps && col + 1 <= grid.width - 2) {
-    const right = sampleQuadAt(grid, row, col + 1, 0, t, x, z);
-    if (right) return right;
-  }
-  if (t <= eps && row > 0) {
-    const up = sampleQuadAt(grid, row - 1, col, s, 1, x, z);
-    if (up) return up;
-  }
-  if (t >= 1 - eps && row + 1 <= grid.height - 2) {
-    const down = sampleQuadAt(grid, row + 1, col, s, 0, x, z);
-    if (down) return down;
+
+  // Inspect primary quad first, then adjacent edge/corner quads when right on a shared grid line.
+  for (const rCand of candidateRows) {
+    const t = clampedV - rCand;
+    for (const cCand of candidateCols) {
+      const s = clampedU - cCand;
+      const hit = sampleQuadAt(grid, rCand, cCand, s, t, x, z);
+      if (hit) {
+        return hit;
+      }
+    }
   }
 
   return null;
+}
+
+function clipUnitSegmentToGrid(
+  u0: number,
+  v0: number,
+  du: number,
+  dv: number,
+  uMax: number,
+  vMax: number,
+): readonly [number, number] | null {
+  const eps = 1e-9;
+  let t0 = 0;
+  let t1 = 1;
+
+  const clipAxis = (p: number, q: number): boolean => {
+    if (Math.abs(p) <= 1e-14) {
+      return q >= 0;
+    }
+    const r = q / p;
+    if (p < 0) {
+      if (r > t1) return false;
+      if (r > t0) t0 = r;
+    } else {
+      if (r < t0) return false;
+      if (r < t1) t1 = r;
+    }
+    return true;
+  };
+
+  if (
+    !clipAxis(-du, u0 + eps) ||
+    !clipAxis(du, uMax + eps - u0) ||
+    !clipAxis(-dv, v0 + eps) ||
+    !clipAxis(dv, vMax + eps - v0) ||
+    t0 > t1
+  ) {
+    return null;
+  }
+
+  return [Math.max(0, t0), Math.min(1, t1)];
+}
+
+function collectStructuralSegmentCuts(
+  grid: TerrainGridData,
+  x0: number,
+  z0: number,
+  x1: number,
+  z1: number,
+): number[] {
+  const [xMin, zMin] = grid.boundsXzM;
+  const u0 = (x0 - xMin) / grid.dx;
+  const v0 = (z0 - zMin) / grid.dy;
+  const u1 = (x1 - xMin) / grid.dx;
+  const v1 = (z1 - zMin) / grid.dy;
+  const du = u1 - u0;
+  const dv = v1 - v0;
+  const dw = du + dv;
+  const w0 = u0 + v0;
+
+  const rawCuts: number[] = [0, 1];
+  const uMax = grid.width - 1;
+  const vMax = grid.height - 1;
+  const clipped = clipUnitSegmentToGrid(u0, v0, du, dv, uMax, vMax);
+
+  if (clipped) {
+    const [fLo, fHi] = clipped;
+    if (fLo > 1e-10 && fLo < 1 - 1e-10) rawCuts.push(fLo);
+    if (fHi > 1e-10 && fHi < 1 - 1e-10) rawCuts.push(fHi);
+
+    const uLo = u0 + du * fLo;
+    const uHi = u0 + du * fHi;
+    if (Math.abs(du) > 1e-12) {
+      const cStart = Math.max(0, Math.ceil(Math.min(uLo, uHi)));
+      const cEnd = Math.min(uMax, Math.floor(Math.max(uLo, uHi)));
+      for (let c = cStart; c <= cEnd; c += 1) {
+        const f = (c - u0) / du;
+        if (f > 1e-10 && f < 1 - 1e-10) rawCuts.push(f);
+      }
+    }
+
+    const vLo = v0 + dv * fLo;
+    const vHi = v0 + dv * fHi;
+    if (Math.abs(dv) > 1e-12) {
+      const rStart = Math.max(0, Math.ceil(Math.min(vLo, vHi)));
+      const rEnd = Math.min(vMax, Math.floor(Math.max(vLo, vHi)));
+      for (let r = rStart; r <= rEnd; r += 1) {
+        const f = (r - v0) / dv;
+        if (f > 1e-10 && f < 1 - 1e-10) rawCuts.push(f);
+      }
+    }
+
+    const wLo = w0 + dw * fLo;
+    const wHi = w0 + dw * fHi;
+    if (Math.abs(dw) > 1e-12) {
+      const kStart = Math.max(1, Math.ceil(Math.min(wLo, wHi)));
+      const kEnd = Math.min(uMax + vMax - 1, Math.floor(Math.max(wLo, wHi)));
+      for (let k = kStart; k <= kEnd; k += 1) {
+        const f = (k - w0) / dw;
+        if (f > 1e-10 && f < 1 - 1e-10) rawCuts.push(f);
+      }
+    }
+  }
+
+  rawCuts.sort((a, b) => a - b);
+  const deduped: number[] = [0];
+  for (let i = 1; i < rawCuts.length; i += 1) {
+    const val = rawCuts[i]!;
+    if (val - deduped[deduped.length - 1]! > 1e-10) {
+      deduped.push(val);
+    }
+  }
+  if (deduped[deduped.length - 1]! < 1) {
+    if (1 - deduped[deduped.length - 1]! <= 1e-10) {
+      deduped[deduped.length - 1] = 1;
+    } else {
+      deduped.push(1);
+    }
+  }
+  return deduped;
 }
 
 export function drapePolylineOnTerrain(
@@ -1287,17 +1420,16 @@ export function drapePolylineOnTerrain(
   let validSamples = 0;
   let lengthM = 0;
 
-  const pushSample = (x: number, z: number) => {
-    totalSamples += 1;
-    const sampled = sampleTerrainAtXz(grid, x, z);
-    if (!sampled) {
-      hasCoverageGap = true;
-      if (currentRun.length > 0) {
-        runs.push(currentRun);
-        currentRun = [];
-      }
+  const appendValidSample = (sampled: TerrainSample) => {
+    const prev = currentRun[currentRun.length - 1];
+    if (
+      prev &&
+      Math.abs(prev.x - sampled.x) <= 1e-9 &&
+      Math.abs(prev.z - sampled.z) <= 1e-9
+    ) {
       return;
     }
+    totalSamples += 1;
     validSamples += 1;
     currentRun.push({
       x: sampled.x,
@@ -1307,16 +1439,97 @@ export function drapePolylineOnTerrain(
     });
   };
 
+  const recordGap = () => {
+    totalSamples += 1;
+    hasCoverageGap = true;
+    if (currentRun.length > 0) {
+      runs.push(currentRun);
+      currentRun = [];
+    }
+  };
+
   for (let segIdx = 0; segIdx < pathXzM.length - 1; segIdx += 1) {
     const [x0, z0] = pathXzM[segIdx]!;
     const [x1, z1] = pathXzM[segIdx + 1]!;
     const segLen = Math.hypot(x1 - x0, z1 - z0);
     lengthM += segLen;
-    const steps = Math.max(1, Math.ceil(segLen / effectiveStep));
-    const startStep = segIdx === 0 ? 0 : 1;
-    for (let s = startStep; s <= steps; s += 1) {
-      const frac = s / steps;
-      pushSample(x0 + (x1 - x0) * frac, z0 + (z1 - z0) * frac);
+
+    if (segIdx === 0) {
+      const startSample = sampleTerrainAtXz(grid, x0, z0);
+      if (startSample) {
+        appendValidSample(startSample);
+      } else {
+        recordGap();
+      }
+    }
+
+    if (segLen <= 1e-12) {
+      continue;
+    }
+
+    const cuts = collectStructuralSegmentCuts(grid, x0, z0, x1, z1);
+    for (let k = 0; k < cuts.length - 1; k += 1) {
+      const fa = cuts[k]!;
+      const fb = cuts[k + 1]!;
+      const fMid = 0.5 * (fa + fb);
+      const midX = x0 + (x1 - x0) * fMid;
+      const midZ = z0 + (z1 - z0) * fMid;
+      const midSample = sampleTerrainAtXz(grid, midX, midZ);
+
+      if (!midSample) {
+        recordGap();
+        // If re-entering valid terrain right at fb (e.g. a grid boundary/vertex), start new run cleanly.
+        const endSample = sampleTerrainAtXz(
+          grid,
+          x0 + (x1 - x0) * fb,
+          z0 + (z1 - z0) * fb,
+        );
+        if (endSample) {
+          appendValidSample(endSample);
+        }
+        continue;
+      }
+
+      if (currentRun.length === 0) {
+        const startEdgeSample = sampleTerrainAtXz(
+          grid,
+          x0 + (x1 - x0) * fa,
+          z0 + (z1 - z0) * fa,
+        );
+        if (startEdgeSample) {
+          appendValidSample(startEdgeSample);
+        } else {
+          appendValidSample(midSample);
+        }
+      }
+
+      const subLenM = segLen * (fb - fa);
+      const subSteps = Math.max(1, Math.ceil(subLenM / effectiveStep));
+      for (let s = 1; s < subSteps; s += 1) {
+        const frac = fa + ((fb - fa) * s) / subSteps;
+        const inner = sampleTerrainAtXz(
+          grid,
+          x0 + (x1 - x0) * frac,
+          z0 + (z1 - z0) * frac,
+        );
+        if (inner) {
+          appendValidSample(inner);
+        } else {
+          recordGap();
+        }
+      }
+
+      const endSample = sampleTerrainAtXz(
+        grid,
+        x0 + (x1 - x0) * fb,
+        z0 + (z1 - z0) * fb,
+      );
+      if (endSample) {
+        appendValidSample(endSample);
+      } else {
+        appendValidSample(midSample);
+        recordGap();
+      }
     }
   }
 
@@ -1982,47 +2195,355 @@ export function validateThermalDecodedPixels(
   };
 }
 
+const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10] as const;
+
+const CRC32_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n += 1) {
+    let c = n;
+    for (let k = 0; k < 8; k += 1) {
+      c = (c & 1) !== 0 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+function computeCrc32(bytes: Uint8Array, start: number, length: number): number {
+  let c = 0xffffffff;
+  for (let i = 0; i < length; i += 1) {
+    const byte = bytes[start + i] ?? 0;
+    c = CRC32_TABLE[(c ^ byte) & 0xff]! ^ (c >>> 8);
+  }
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function paethPredictor(a: number, b: number, c: number): number {
+  const p = a + b - c;
+  const pa = Math.abs(p - a);
+  const pb = Math.abs(p - b);
+  const pc = Math.abs(p - c);
+  if (pa <= pb && pa <= pc) return a;
+  if (pb <= pc) return b;
+  return c;
+}
+
+async function decompressZlibBytes(compressed: Uint8Array): Promise<Uint8Array> {
+  if (typeof DecompressionStream !== 'function') {
+    throw new ContractValidationError(
+      'png_decompression_unsupported',
+      'Este entorno no soporta DecompressionStream("deflate") para decodificar PNG sin Canvas.',
+    );
+  }
+  try {
+    const stream = new DecompressionStream('deflate');
+    const writer = stream.writable.getWriter();
+    const copy = new Uint8Array(compressed.byteLength);
+    copy.set(compressed);
+    const writePromise = writer.write(copy).then(() => writer.close());
+    const readPromise = new Response(stream.readable).arrayBuffer();
+    const [buffer] = await Promise.all([readPromise, writePromise]);
+    return new Uint8Array(buffer);
+  } catch (err) {
+    throw new ContractValidationError(
+      'corrupt_png_idat',
+      `No se pudo descomprimir el flujo zlib de IDAT: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
+
+/**
+ * Decodes PNG RGBA8 non-interlaced bytes strictly in JS + Web DecompressionStream
+ * without invoking Canvas 2D getImageData (immune to canvas noise/farbling).
+ * Explicit v1 scope: bitDepth=8, colorType=6 (RGBA), compression=0, filter=0, interlace=0.
+ */
+export async function decodePngRgbaDirect(
+  bytes: Uint8Array,
+): Promise<{ readonly width: number; readonly height: number; readonly rgba: Uint8ClampedArray }> {
+  if (bytes.byteLength < 8) {
+    throw new ContractValidationError('invalid_png_signature', 'El archivo PNG está truncado.');
+  }
+  for (let i = 0; i < 8; i += 1) {
+    if (bytes[i] !== PNG_SIGNATURE[i]) {
+      throw new ContractValidationError(
+        'invalid_png_signature',
+        'Cabecera PNG inválida al decodificar térmica.',
+      );
+    }
+  }
+
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let offset = 8;
+  let width = 0;
+  let height = 0;
+  let sawIhdr = false;
+  let sawIend = false;
+  const idatChunks: Uint8Array[] = [];
+
+  while (offset < bytes.byteLength) {
+    if (offset + 12 > bytes.byteLength) {
+      throw new ContractValidationError('truncated_png_chunk', 'Chunk PNG truncado.');
+    }
+    const length = view.getUint32(offset, false);
+    if (length > 0x7fffffff || offset + 12 + length > bytes.byteLength) {
+      throw new ContractValidationError('truncated_png_chunk', 'Longitud de chunk PNG fuera de rango.');
+    }
+    const chunkType = String.fromCharCode(
+      bytes[offset + 4]!,
+      bytes[offset + 5]!,
+      bytes[offset + 6]!,
+      bytes[offset + 7]!,
+    );
+    const dataStart = offset + 8;
+    const expectedCrc = view.getUint32(dataStart + length, false);
+    const actualCrc = computeCrc32(bytes, offset + 4, 4 + length);
+    if (actualCrc !== expectedCrc) {
+      throw new ContractValidationError(
+        'invalid_png_crc',
+        `CRC-32 inválido en el chunk ${chunkType} del PNG térmico.`,
+      );
+    }
+
+    if (sawIend) {
+      throw new ContractValidationError(
+        'trailing_png_chunks',
+        `Se encontraron chunks PNG (${chunkType}) después de IEND.`,
+      );
+    }
+
+    if (chunkType === 'IHDR') {
+      if (sawIhdr || offset !== 8 || length !== 13) {
+        throw new ContractValidationError('invalid_png_ihdr', 'Chunk IHDR inválido o duplicado.');
+      }
+      sawIhdr = true;
+      width = view.getUint32(dataStart, false);
+      height = view.getUint32(dataStart + 4, false);
+      const bitDepth = bytes[dataStart + 8]!;
+      const colorType = bytes[dataStart + 9]!;
+      const compressionMethod = bytes[dataStart + 10]!;
+      const filterMethod = bytes[dataStart + 11]!;
+      const interlaceMethod = bytes[dataStart + 12]!;
+
+      if (width <= 0 || height <= 0 || width > 8192 || height > 8192 || width * height > 16_777_216) {
+        throw new ContractValidationError(
+          'invalid_png_dimensions',
+          `Dimensiones PNG inválidas o fuera de límite: ${width}×${height}.`,
+        );
+      }
+      if (bitDepth !== 8 || colorType !== 6 || compressionMethod !== 0 || filterMethod !== 0) {
+        throw new ContractValidationError(
+          'unsupported_png_format',
+          `Solo se soporta PNG RGBA8 no entrelazado v1 (recibido bitDepth=${bitDepth}, colorType=${colorType}).`,
+        );
+      }
+      if (interlaceMethod !== 0) {
+        throw new ContractValidationError(
+          'unsupported_png_interlaced',
+          'PNG Adam7 entrelazado fuera de alcance v1: se requiere interlaceMethod=0.',
+        );
+      }
+    } else {
+      if (!sawIhdr) {
+        throw new ContractValidationError('missing_png_ihdr', 'El PNG no comienza con IHDR.');
+      }
+      if (chunkType === 'IDAT') {
+        idatChunks.push(bytes.subarray(dataStart, dataStart + length));
+      } else if (chunkType === 'IEND') {
+        if (length !== 0) {
+          throw new ContractValidationError('invalid_png_iend', 'Chunk IEND con longitud distinta de cero.');
+        }
+        sawIend = true;
+      } else {
+        const isCritical = ((bytes[offset + 4]! >> 5) & 1) === 0;
+        if (isCritical && chunkType !== 'PLTE') {
+          throw new ContractValidationError(
+            'unsupported_png_chunk',
+            `Chunk crítico PNG no soportado en alcance v1: ${chunkType}.`,
+          );
+        }
+      }
+    }
+
+    offset += 12 + length;
+  }
+
+  if (!sawIhdr || !sawIend || idatChunks.length === 0) {
+    throw new ContractValidationError(
+      'incomplete_png_stream',
+      'El archivo PNG carece de IHDR, IDAT o IEND completos.',
+    );
+  }
+
+  const totalIdatLength = idatChunks.reduce((acc, c) => acc + c.byteLength, 0);
+  const compressed = new Uint8Array(totalIdatLength);
+  let cursor = 0;
+  for (const chunk of idatChunks) {
+    compressed.set(chunk, cursor);
+    cursor += chunk.byteLength;
+  }
+
+  const inflated = await decompressZlibBytes(compressed);
+  const stride = width * 4;
+  const expectedLength = height * (1 + stride);
+  if (inflated.byteLength !== expectedLength) {
+    throw new ContractValidationError(
+      'corrupt_png_scanlines',
+      `Las scanlines descomprimidas miden ${inflated.byteLength} B frente a ${expectedLength} B esperados.`,
+    );
+  }
+
+  const rgba = new Uint8ClampedArray(width * height * 4);
+  const bpp = 4;
+
+  for (let row = 0; row < height; row += 1) {
+    const scanStart = row * (1 + stride);
+    const filterType = inflated[scanStart]!;
+    if (filterType > 4) {
+      throw new ContractValidationError(
+        'unsupported_png_filter',
+        `Tipo de filtro PNG inválido (${filterType}) en la fila ${row}.`,
+      );
+    }
+    const rowInOffset = scanStart + 1;
+    const rowOutOffset = row * stride;
+    const prevRowOutOffset = (row - 1) * stride;
+
+    for (let i = 0; i < stride; i += 1) {
+      const rawByte = inflated[rowInOffset + i]!;
+      const left = i >= bpp ? rgba[rowOutOffset + i - bpp]! : 0;
+      const up = row > 0 ? rgba[prevRowOutOffset + i]! : 0;
+      const upLeft = row > 0 && i >= bpp ? rgba[prevRowOutOffset + i - bpp]! : 0;
+
+      let predictor = 0;
+      if (filterType === 1) {
+        predictor = left;
+      } else if (filterType === 2) {
+        predictor = up;
+      } else if (filterType === 3) {
+        predictor = (left + up) >> 1;
+      } else if (filterType === 4) {
+        predictor = paethPredictor(left, up, upLeft);
+      }
+      rgba[rowOutOffset + i] = (rawByte + predictor) & 0xff;
+    }
+  }
+
+  return { width, height, rgba };
+}
+
+export function samplePoseAlongDrapedPolyline(
+  polyline: DrapedPolylineResult,
+  fraction01: number,
+): DrapedPose | null {
+  const validRuns = polyline.runs.filter((run) => run.length > 0);
+  if (validRuns.length === 0) {
+    return null;
+  }
+
+  const runData: Array<{
+    readonly points: readonly DrapedPoint[];
+    readonly cumulative: number[];
+    readonly lengthM: number;
+  }> = [];
+  let totalValidLength = 0;
+
+  for (const run of validRuns) {
+    const cumulative: number[] = [0];
+    let acc = 0;
+    for (let i = 1; i < run.length; i += 1) {
+      const prev = run[i - 1]!;
+      const curr = run[i]!;
+      acc += Math.hypot(curr.x - prev.x, curr.z - prev.z);
+      cumulative.push(acc);
+    }
+    runData.push({ points: run, cumulative, lengthM: acc });
+    totalValidLength += acc;
+  }
+
+  const computeRunYaw = (pts: readonly DrapedPoint[], segIndex: number): number => {
+    const minIdx = Math.max(0, Math.min(pts.length - 2, segIndex));
+    if (pts.length >= 2) {
+      for (let i = minIdx; i < pts.length - 1; i += 1) {
+        const dx = pts[i + 1]!.x - pts[i]!.x;
+        const dz = pts[i + 1]!.z - pts[i]!.z;
+        if (Math.hypot(dx, dz) > 1e-9) {
+          return Math.atan2(dx, dz);
+        }
+      }
+      for (let i = minIdx - 1; i >= 0; i -= 1) {
+        const dx = pts[i + 1]!.x - pts[i]!.x;
+        const dz = pts[i + 1]!.z - pts[i]!.z;
+        if (Math.hypot(dx, dz) > 1e-9) {
+          return Math.atan2(dx, dz);
+        }
+      }
+    }
+    return 0;
+  };
+
+  if (totalValidLength <= 1e-12) {
+    const first = validRuns[0]![0]!;
+    return { ...first, yawRad: 0 };
+  }
+
+  const t = Math.max(0, Math.min(1, fraction01));
+  const targetLen = t * totalValidLength;
+  let passedLength = 0;
+
+  for (let rIdx = 0; rIdx < runData.length; rIdx += 1) {
+    const run = runData[rIdx]!;
+    const isLastRun = rIdx === runData.length - 1;
+    if (run.lengthM <= 1e-12 && !isLastRun) {
+      continue;
+    }
+    if (targetLen <= passedLength + run.lengthM || isLastRun) {
+      const localTarget = Math.max(0, Math.min(run.lengthM, targetLen - passedLength));
+      const pts = run.points;
+      if (pts.length === 1 || run.lengthM <= 1e-12) {
+        return { ...pts[0]!, yawRad: computeRunYaw(pts, 0) };
+      }
+      for (let i = 1; i < pts.length; i += 1) {
+        const l0 = run.cumulative[i - 1]!;
+        const l1 = run.cumulative[i]!;
+        if (localTarget <= l1 || i === pts.length - 1) {
+          const segLen = l1 - l0 || 1;
+          const alpha = Math.max(0, Math.min(1, (localTarget - l0) / segLen));
+          const p0 = pts[i - 1]!;
+          const p1 = pts[i]!;
+          return {
+            x: p0.x + (p1.x - p0.x) * alpha,
+            y: p0.y + (p1.y - p0.y) * alpha,
+            z: p0.z + (p1.z - p0.z) * alpha,
+            elevationM: p0.elevationM + (p1.elevationM - p0.elevationM) * alpha,
+            yawRad: computeRunYaw(pts, i - 1),
+          };
+        }
+      }
+    }
+    passedLength += run.lengthM;
+  }
+
+  const lastRun = validRuns[validRuns.length - 1]!;
+  return {
+    ...lastRun[lastRun.length - 1]!,
+    yawRad: computeRunYaw(lastRun, lastRun.length - 2),
+  };
+}
+
 export function samplePointAlongDrapedPolyline(
   polyline: DrapedPolylineResult,
   fraction01: number,
 ): DrapedPoint | null {
-  const flat = polyline.runs.flat();
-  if (flat.length === 0) {
+  const pose = samplePoseAlongDrapedPolyline(polyline, fraction01);
+  if (!pose) {
     return null;
   }
-  if (flat.length === 1) {
-    return flat[0]!;
-  }
-  const t = Math.max(0, Math.min(1, fraction01));
-  const lengths: number[] = [0];
-  let total = 0;
-  for (let i = 1; i < flat.length; i += 1) {
-    const prev = flat[i - 1]!;
-    const curr = flat[i]!;
-    total += Math.hypot(curr.x - prev.x, curr.z - prev.z);
-    lengths.push(total);
-  }
-  if (total === 0) {
-    return flat[0]!;
-  }
-  const targetLen = t * total;
-  for (let i = 1; i < flat.length; i += 1) {
-    const l0 = lengths[i - 1]!;
-    const l1 = lengths[i]!;
-    if (targetLen <= l1 || i === flat.length - 1) {
-      const seg = l1 - l0 || 1;
-      const alpha = Math.max(0, Math.min(1, (targetLen - l0) / seg));
-      const p0 = flat[i - 1]!;
-      const p1 = flat[i]!;
-      return {
-        x: p0.x + (p1.x - p0.x) * alpha,
-        y: p0.y + (p1.y - p0.y) * alpha,
-        z: p0.z + (p1.z - p0.z) * alpha,
-        elevationM: p0.elevationM + (p1.elevationM - p0.elevationM) * alpha,
-      };
-    }
-  }
-  return flat[flat.length - 1]!;
+  return {
+    x: pose.x,
+    y: pose.y,
+    z: pose.z,
+    elevationM: pose.elevationM,
+  };
 }
 
 export function getDefaultMissionRouteFallback(): RouteId {

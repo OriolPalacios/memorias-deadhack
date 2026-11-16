@@ -65,6 +65,7 @@ export interface ReadyRouteGeometriesRef {
 export interface ReadyThermalRef {
   readonly productId: string;
   readonly acquisitionContext: string;
+  readonly acquisitionDatesKnown: boolean;
   readonly acquisitionDetail: string;
   readonly sourceAttribution: string;
   readonly label: string;
@@ -158,7 +159,7 @@ export function createPendingDataPort(): SceneDataPort {
       },
       surface_photo: {
         id: 'surface_photo',
-        label: 'Foto (Enchanted Lake)',
+        label: 'Foto contextual (Enchanted Lake)',
         sourceHint: 'Perseverance (JPL)',
         requirement: 'required_mvp',
         status: 'awaiting_contract',

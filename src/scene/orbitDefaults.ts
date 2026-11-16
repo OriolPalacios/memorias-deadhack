@@ -42,20 +42,30 @@ export function createTerrainCameraPreset(
   const span = Math.max(sizeX, sizeZ);
 
   const overviewTarget: readonly [number, number, number] = [cx, cy, cz];
+  // ~54° oblique look looking ESE so Base sits bottom-left and simulated Science sits top-right.
+  const pitchRad = (54 * Math.PI) / 180;
+  const overviewDistance = span * 1.24;
+  const overviewHoriz = overviewDistance * Math.cos(pitchRad);
+  const overviewHeight = overviewDistance * Math.sin(pitchRad);
+  const azX = -0.92;
+  const azZ = -0.39;
   const overviewPosition: readonly [number, number, number] = [
-    cx + span * 0.48,
-    cy + span * 0.62,
-    cz + span * 0.84,
+    cx + azX * overviewHoriz,
+    cy + overviewHeight,
+    cz + azZ * overviewHoriz,
   ];
 
   const focusTarget: readonly [number, number, number] | null = sciencePoint
-    ? [sciencePoint[0], sciencePoint[1], sciencePoint[2]]
+    ? [sciencePoint[0], sciencePoint[1] + 4, sciencePoint[2]]
     : null;
+  const focusDistance = span * 0.42;
+  const focusHoriz = focusDistance * Math.cos(pitchRad * 0.82);
+  const focusHeight = focusDistance * Math.sin(pitchRad * 0.82);
   const focusPosition: readonly [number, number, number] | null = sciencePoint
     ? [
-        sciencePoint[0] + span * 0.18,
-        sciencePoint[1] + span * 0.18,
-        sciencePoint[2] + span * 0.24,
+        sciencePoint[0] + azX * focusHoriz,
+        sciencePoint[1] + focusHeight + 6,
+        sciencePoint[2] + azZ * focusHoriz,
       ]
     : null;
 

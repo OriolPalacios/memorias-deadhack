@@ -1,23 +1,14 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import {
-  createInitialMissionState,
-  missionShellReducer,
-  type MissionShellAction,
-  type MissionShellState,
-} from './app/missionState.ts';
-import {
-  isLayerReady,
-  type ReadyTerrainRef,
-  type ReadyThermalRef,
-  type SceneDataPort,
-} from './data/dataSeam.ts';
+  authoritativeMissionReducer,
+  createAuthoritativeMissionState,
+  getAuthoritativeBaseline,
+  isPlaybackActivelyAnimating,
+} from './app/missionPlayback.ts';
+import { isLayerReady, type ReadyTerrainRef, type ReadyThermalRef, type SceneDataPort } from './data/dataSeam.ts';
 import { useJezeroPackageLoader } from './data/jezeroLoader.ts';
-import { getMissionPhaseMeta } from './domain/missionEngine.ts';
-import {
-  buildRouteProjection,
-  SIMULATED_MISSION_BASELINE,
-} from './domain/scenario.ts';
-import type { InspectablePoiId } from './scene/JezeroTerrainStage.tsx';
+import { buildRouteProjection, SIMULATED_MISSION_BASELINE } from './domain/scenario.ts';
+import type { InspectablePoiId, TerrainSurfaceMode } from './scene/JezeroTerrainStage.tsx';
 import { OrbitalViewport } from './scene/OrbitalViewport.tsx';
 import { detectWebGLSupport } from './scene/webglSupport.ts';
 import { AutonomyComparisonPanel } from './ui/AutonomyComparisonPanel.tsx';
@@ -30,7 +21,7 @@ export interface AppProps {
 }
 
 function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState<boolean>(() => {
+  const [reduced, setReduced] = useState(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return false;
     }
@@ -41,14 +32,10 @@ function usePrefersReducedMotion(): boolean {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return undefined;
     }
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handleChange = (event: MediaQueryListEvent) => {
-      setReduced(event.matches);
-    };
-    query.addEventListener('change', handleChange);
-    return () => {
-      query.removeEventListener('change', handleChange);
-    };
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = (event: MediaQueryListEvent) => setReduced(event.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
   }, []);
 
   return reduced;
@@ -57,37 +44,112 @@ function usePrefersReducedMotion(): boolean {
 export function App({ dataPort }: AppProps) {
   const packageLoader = useJezeroPackageLoader(dataPort === undefined);
   const resolvedPort = dataPort ?? packageLoader.dataPort;
-  const activeBaseline =
-    dataPort === undefined ? packageLoader.activeBaseline : SIMULATED_MISSION_BASELINE;
   const reducedMotion = usePrefersReducedMotion();
 
-  const [state, dispatch] = useReducer(
-    (prevState: MissionShellState, action: MissionShellAction) =>
-      missionShellReducer(prevState, action, activeBaseline),
+  const [controllerState, dispatch] = useReducer(
+    authoritativeMissionReducer,
     undefined,
-    () => createInitialMissionState(detectWebGLSupport() ? 'ready' : 'unavailable'),
+    () =>
+      createAuthoritativeMissionState(
+        detectWebGLSupport() ? 'ready' : 'unavailable',
+        dataPort !== undefined ? 'ready' : 'loading',
+        dataPort !== undefined ? SIMULATED_MISSION_BASELINE : null,
+      ),
   );
 
+  const [surfaceMode, setSurfaceMode] = useState<TerrainSurfaceMode>('illustrative');
+  const [routesVisible, setRoutesVisible] = useState(true);
+  const [poisVisible, setPoisVisible] = useState(true);
   const [thermalEnabled, setThermalEnabled] = useState(false);
   const [thermalOpacity, setThermalOpacity] = useState(0.75);
   const [selectedPoiId, setSelectedPoiId] = useState<InspectablePoiId>('science');
   const [focusSignal, setFocusSignal] = useState(0);
 
-  // Sync loaded scenario budget/reserve/times into initial planning state without resetting view
+  // Sync loaded/fallback scenario config atomically without ever mixing an underway run
   useEffect(() => {
-    if (dataPort === undefined && packageLoader.scenarioStatus === 'ready') {
-      dispatch({ type: 'sync_baseline', baseline: activeBaseline });
+    if (dataPort !== undefined) {
+      return;
     }
-  }, [dataPort, packageLoader.scenarioStatus, activeBaseline]);
+    dispatch({
+      type: 'sync_config',
+      authority: packageLoader.scenarioAuthority,
+      baseline:
+        packageLoader.scenarioAuthority === 'loading'
+          ? null
+          : packageLoader.activeBaseline,
+    });
+  }, [dataPort, packageLoader.scenarioAuthority, packageLoader.activeBaseline]);
+
+  // Automatic mission playback loop completely outside R3F Canvas (runs in WebGL fallback too)
+  const shouldAnimatePlayback = isPlaybackActivelyAnimating(controllerState);
+  const activeGeneration = controllerState.playback.executionGeneration;
+  const activePhase = controllerState.shell.mission.phase;
+
+  useEffect(() => {
+    if (!shouldAnimatePlayback) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    let rafId = 0;
+    const getNow = () =>
+      typeof performance !== 'undefined' ? performance.now() : Date.now();
+    let lastTime = getNow();
+
+    const advanceClock = (now: number) => {
+      if (cancelled) return;
+      const rawDt = Math.max(0, now - lastTime);
+      if (rawDt <= 0) return;
+      lastTime = now;
+      // Cap single-step jumps (tab backgrounding / screenshot pauses) while keeping real-time cadence.
+      const dtMs = Math.min(180, rawDt);
+      dispatch({
+        type: 'playback_tick',
+        dtMs,
+        reducedMotion,
+        expectedGeneration: activeGeneration,
+        expectedPhase: activePhase,
+      });
+    };
+
+    const step = (now: number) => {
+      if (cancelled) return;
+      advanceClock(now);
+      rafId = requestAnimationFrame(step);
+    };
+
+    if (typeof requestAnimationFrame === 'function') {
+      rafId = requestAnimationFrame(step);
+    }
+
+    // Heartbeat ensures progress stays accurate even if rAF pauses/throttles under headless/software WebGL.
+    const heartbeatMs = reducedMotion ? 16 : 36;
+    const timer = window.setInterval(() => {
+      const now = getNow();
+      if (now - lastTime >= heartbeatMs - 4) {
+        advanceClock(now);
+      }
+    }, heartbeatMs);
+
+    return () => {
+      cancelled = true;
+      if (rafId && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(rafId);
+      }
+      window.clearInterval(timer);
+    };
+  }, [shouldAnimatePlayback, reducedMotion, activeGeneration, activePhase]);
+
+  const shell = controllerState.shell;
+  const activeBaseline = getAuthoritativeBaseline(controllerState);
+  const configPending =
+    dataPort === undefined &&
+    shell.mission.phase === 'planning' &&
+    controllerState.configAuthority === 'loading';
 
   const projection = useMemo(
-    () => buildRouteProjection(state.selectedRouteId, activeBaseline),
-    [state.selectedRouteId, activeBaseline],
-  );
-  const phaseMeta = getMissionPhaseMeta(
-    state.mission.phase,
-    activeBaseline,
-    state.selectedRouteId,
+    () => buildRouteProjection(shell.selectedRouteId, activeBaseline),
+    [shell.selectedRouteId, activeBaseline],
   );
 
   const terrainLayer = resolvedPort.layers.terrain_dem;
@@ -112,24 +174,24 @@ export function App({ dataPort }: AppProps) {
   const headerStatus = (() => {
     if (dataPort !== undefined) {
       return resolvedPort.integrationStage === 'connected'
-        ? { tone: 'pos' as const, label: 'Datos de misión disponibles' }
-        : { tone: 'warn' as const, label: 'Simulación previa · Datos en espera' };
+        ? { tone: 'pos' as const, label: 'Datos disponibles' }
+        : { tone: 'warn' as const, label: 'Simulación previa' };
     }
-    if (packageLoader.usingFallbackTimings) {
-      return { tone: 'warn' as const, label: 'Escenario no disponible · Respaldo' };
+    if (controllerState.configAuthority === 'fallback' || packageLoader.usingFallbackTimings) {
+      return { tone: 'warn' as const, label: 'Escenario · Respaldo' };
     }
     if (
       hasRealTerrain &&
-      packageLoader.scenarioStatus === 'ready' &&
+      controllerState.configAuthority === 'ready' &&
       packageLoader.drapedGeometry !== null
     ) {
-      return { tone: 'pos' as const, label: 'Jezero DEM · Escenario simulado' };
+      return { tone: 'pos' as const, label: 'Jezero DEM · Escenario listo' };
     }
     if (
       terrainLayer.status === 'loading' ||
-      packageLoader.scenarioStatus === 'loading'
+      controllerState.configAuthority === 'loading'
     ) {
-      return { tone: 'neutral' as const, label: 'Cargando paquete Jezero...' };
+      return { tone: 'neutral' as const, label: 'Cargando paquete Jezero…' };
     }
     return { tone: 'warn' as const, label: 'Carga parcial · Revisar capas' };
   })();
@@ -150,109 +212,18 @@ export function App({ dataPort }: AppProps) {
         productName={activeBaseline.productName}
         missionTitle={activeBaseline.missionTitle}
         scientificContext={activeBaseline.scientificContext}
+        initialBudgetMin={shell.mission.initialBudgetMin}
+        reserveMin={shell.mission.reserveMin}
+        remainingMin={shell.mission.remainingMin}
+        configPending={configPending}
         statusTone={headerStatus.tone}
         statusLabel={headerStatus.label}
-        onResetScenario={() =>
-          dispatch({ type: 'reset_scenario', baseline: activeBaseline })
-        }
+        onResetScenario={() => dispatch({ type: 'reset_scenario' })}
       />
 
       <main className="workspace">
-        <div className="title-row">
-          <div className="title-copy">
-            <h1>¿Conserva otra parada la reserva de regreso?</h1>
-            <p className="title-sub">
-              {hasRealTerrain && packageLoader.scenarioStatus === 'ready'
-                ? 'Escenario simulado sobre recorte DEM real de Jezero (HiRISE) y capa térmica THEMIS. Las posiciones, rutas y tiempos son parámetros simulados; no certifica seguridad EVA.'
-                : 'Escenario simulado previo a la caminata en Jezero. Los tiempos de ruta y las posiciones son parámetros simulados del escenario.'}
-            </p>
-          </div>
-          <div className="title-summary-note num">
-            <span>{projection.route.code}</span>
-            <span aria-hidden="true">·</span>
-            <span>{phaseMeta.label}</span>
-            <span aria-hidden="true">·</span>
-            <span>Restante {state.mission.remainingMin} min</span>
-          </div>
-        </div>
-
-        <div className="cockpit-grid">
-          <div className="grid-slot slot-route">
-            <RouteSelectorPanel
-              selectedRouteId={state.selectedRouteId}
-              mission={state.mission}
-              baseline={activeBaseline}
-              scenarioId={packageLoader.scenarioManifest?.id ?? null}
-              usingFallbackTimings={
-                dataPort === undefined && packageLoader.usingFallbackTimings
-              }
-              scenarioError={packageLoader.scenarioError}
-              hasValidatedGeometry={packageLoader.drapedGeometry !== null}
-              onSelectRoute={(routeId) =>
-                dispatch({ type: 'select_route', routeId, baseline: activeBaseline })
-              }
-              onDispatchMissionEvent={(event) =>
-                dispatch({ type: 'mission_event', event, baseline: activeBaseline })
-              }
-              onResetScenario={() =>
-                dispatch({ type: 'reset_scenario', baseline: activeBaseline })
-              }
-              onRetryScenario={
-                dataPort === undefined ? packageLoader.retryScenario : undefined
-              }
-            />
-          </div>
-
-          <div className="grid-slot slot-viewport">
-            <OrbitalViewport
-              webglStatus={state.webglStatus}
-              resetSignal={state.cameraResetCount}
-              focusSignal={focusSignal}
-              hasOrbitedView={state.hasOrbitedView}
-              reducedMotion={reducedMotion}
-              hasRealTerrain={hasRealTerrain}
-              terrainStatusLabel={terrainStatusLabel}
-              terrainGrid={packageLoader.terrainGrid}
-              terrainRef={terrainRef}
-              thermalBundle={packageLoader.thermalBundle}
-              thermalRef={thermalRef}
-              thermalEnabled={thermalEnabled && thermalRef !== null}
-              thermalOpacity={thermalOpacity}
-              drapedGeometry={packageLoader.drapedGeometry}
-              selectedRouteId={state.selectedRouteId}
-              inspectedOptionId={state.inspectedOptionId}
-              mission={state.mission}
-              selectedPoiId={selectedPoiId}
-              onUserOrbit={() => dispatch({ type: 'orbit_changed' })}
-              onResetCamera={() => dispatch({ type: 'reset_camera' })}
-              onFocusScience={handleFocusScience}
-              onToggleThermal={handleToggleThermal}
-              onThermalOpacityChange={setThermalOpacity}
-              onSelectPoi={setSelectedPoiId}
-              onWebGLUnavailable={() =>
-                dispatch({ type: 'set_webgl_status', status: 'unavailable' })
-              }
-              onWebGLRestored={() =>
-                dispatch({
-                  type: 'set_webgl_status',
-                  status: detectWebGLSupport() ? 'ready' : 'unavailable',
-                })
-              }
-            />
-          </div>
-
-          <div className="grid-slot slot-comparison">
-            <AutonomyComparisonPanel
-              projection={projection}
-              mission={state.mission}
-              inspectedOptionId={state.inspectedOptionId}
-              onInspectOption={(optionId) =>
-                dispatch({ type: 'inspect_option', optionId })
-              }
-            />
-          </div>
-
-          <div className="grid-slot slot-data">
+        <div className="cockpit-grid" data-testid="cockpit-grid">
+          <aside className="grid-slot slot-left-rail" aria-label="Contexto de datos">
             <DataReadinessPanel
               dataPort={resolvedPort}
               terrainGrid={packageLoader.terrainGrid}
@@ -266,12 +237,99 @@ export function App({ dataPort }: AppProps) {
               onToggleThermal={thermalRef ? handleToggleThermal : undefined}
               onSelectPoi={setSelectedPoiId}
               onFocusScience={
-                state.webglStatus === 'ready' && hasRealTerrain
+                shell.webglStatus === 'ready' && hasRealTerrain
                   ? handleFocusScience
                   : undefined
               }
             />
+          </aside>
+
+          <div className="grid-slot slot-viewport">
+            <OrbitalViewport
+              webglStatus={shell.webglStatus}
+              resetSignal={shell.cameraResetCount}
+              focusSignal={focusSignal}
+              hasOrbitedView={shell.hasOrbitedView}
+              reducedMotion={reducedMotion}
+              hasRealTerrain={hasRealTerrain}
+              terrainStatusLabel={terrainStatusLabel}
+              terrainGrid={packageLoader.terrainGrid}
+              terrainRef={terrainRef}
+              thermalBundle={packageLoader.thermalBundle}
+              thermalRef={thermalRef}
+              thermalEnabled={thermalEnabled && thermalRef !== null}
+              thermalOpacity={thermalOpacity}
+              surfaceMode={surfaceMode}
+              routesVisible={routesVisible}
+              poisVisible={poisVisible}
+              drapedGeometry={packageLoader.drapedGeometry}
+              selectedRouteId={shell.selectedRouteId}
+              inspectedOptionId={shell.inspectedOptionId}
+              mission={shell.mission}
+              playback={controllerState.playback}
+              selectedPoiId={selectedPoiId}
+              onUserOrbit={() => dispatch({ type: 'orbit_changed' })}
+              onResetCamera={() => dispatch({ type: 'reset_camera' })}
+              onFocusScience={handleFocusScience}
+              onToggleThermal={handleToggleThermal}
+              onThermalOpacityChange={setThermalOpacity}
+              onSurfaceModeChange={setSurfaceMode}
+              onToggleRoutes={() => setRoutesVisible((v) => !v)}
+              onTogglePois={() => setPoisVisible((v) => !v)}
+              onSelectPoi={setSelectedPoiId}
+              onWebGLUnavailable={() =>
+                dispatch({ type: 'set_webgl_status', status: 'unavailable' })
+              }
+              onWebGLRestored={() =>
+                dispatch({
+                  type: 'set_webgl_status',
+                  status: detectWebGLSupport() ? 'ready' : 'unavailable',
+                })
+              }
+            />
           </div>
+
+          <aside className="grid-slot slot-right-dock" aria-label="Planificación y autonomía">
+            <RouteSelectorPanel
+              selectedRouteId={shell.selectedRouteId}
+              mission={shell.mission}
+              playback={controllerState.playback}
+              configAuthority={
+                dataPort !== undefined ? 'ready' : controllerState.configAuthority
+              }
+              baseline={activeBaseline}
+              scenarioId={packageLoader.scenarioManifest?.id ?? null}
+              usingFallbackTimings={
+                dataPort === undefined &&
+                controllerState.configAuthority === 'fallback' &&
+                shell.mission.phase === 'planning'
+              }
+              scenarioError={packageLoader.scenarioError}
+              hasValidatedGeometry={packageLoader.drapedGeometry !== null}
+              onSelectRoute={(routeId) => dispatch({ type: 'select_route', routeId })}
+              onStartSimulation={() =>
+                dispatch({ type: 'start_simulation', reducedMotion })
+              }
+              onTogglePause={() => dispatch({ type: 'toggle_pause' })}
+              onChooseBranch={(branch) =>
+                dispatch({ type: 'choose_branch', branch, reducedMotion })
+              }
+              onResetScenario={() => dispatch({ type: 'reset_scenario' })}
+              onRetryScenario={
+                dataPort === undefined ? packageLoader.retryScenario : undefined
+              }
+            />
+
+            <AutonomyComparisonPanel
+              projection={projection}
+              mission={shell.mission}
+              configPending={configPending}
+              inspectedOptionId={shell.inspectedOptionId}
+              onInspectOption={(optionId) =>
+                dispatch({ type: 'inspect_option', optionId })
+              }
+            />
+          </aside>
         </div>
       </main>
     </div>

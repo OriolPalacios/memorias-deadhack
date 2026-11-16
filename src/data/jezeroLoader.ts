@@ -15,6 +15,7 @@ import {
 import {
   ContractValidationError,
   decodeAndValidateDemBinaries,
+  decodePngRgbaDirect,
   mapScenarioToMissionBaseline,
   parseAndValidateScenarioManifest,
   parseAndValidateTerrainManifest,
@@ -32,6 +33,7 @@ import {
 } from './jezeroContracts.ts';
 
 export type ResourceChannelStatus = 'idle' | 'loading' | 'ready' | 'error';
+export type ScenarioConfigAuthority = 'loading' | 'ready' | 'fallback';
 
 export interface ResourceChannelState<T> {
   readonly status: ResourceChannelStatus;
@@ -65,6 +67,7 @@ export interface JezeroPackageHandle {
   readonly drapedGeometry: DrapedScenarioGeometry | null;
   readonly geometryError: string | null;
   readonly activeBaseline: MissionBaselineConstants;
+  readonly scenarioAuthority: ScenarioConfigAuthority;
   readonly scenarioStatus: ResourceChannelStatus;
   readonly scenarioError: string | null;
   readonly usingFallbackTimings: boolean;
@@ -126,75 +129,6 @@ async function fetchBinaryResource(
   }
   const buffer = await response.arrayBuffer();
   return new Uint8Array(buffer);
-}
-
-async function decodePngRgbaBytes(
-  bytes: Uint8Array,
-  objectUrl: string,
-): Promise<{ readonly width: number; readonly height: number; readonly rgba: Uint8ClampedArray }> {
-  if (typeof createImageBitmap === 'function') {
-    const blob = new Blob([bytes.slice().buffer], { type: 'image/png' });
-    const bitmap = await createImageBitmap(blob, {
-      premultiplyAlpha: 'none',
-      colorSpaceConversion: 'none',
-    });
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      if (!ctx) {
-        throw new ContractValidationError(
-          'canvas_2d_unavailable',
-          'No se pudo inicializar el contexto 2D para decodificar la capa térmica.',
-        );
-      }
-      ctx.drawImage(bitmap, 0, 0);
-      const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
-      return {
-        width: bitmap.width,
-        height: bitmap.height,
-        rgba: imageData.data,
-      };
-    } finally {
-      bitmap.close();
-    }
-  }
-
-  return await new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      if (!ctx) {
-        reject(
-          new ContractValidationError(
-            'canvas_2d_unavailable',
-            'No se pudo inicializar el contexto 2D para decodificar la capa térmica.',
-          ),
-        );
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, img.naturalWidth, img.naturalHeight);
-      resolve({
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-        rgba: imageData.data,
-      });
-    };
-    img.onerror = () => {
-      reject(
-        new ContractValidationError(
-          'thermal_image_decode_failed',
-          'La imagen PNG térmica no pudo decodificarse.',
-        ),
-      );
-    };
-    img.src = objectUrl;
-  });
 }
 
 async function verifyImageDecodable(objectUrl: string, label: string): Promise<void> {
@@ -416,7 +350,6 @@ export function useJezeroPackageLoader(enabled: boolean): JezeroPackageHandle {
       return undefined;
     }
     const controller = new AbortController();
-    let localUrl: string | null = null;
 
     setState((prev) => ({
       ...prev,
@@ -440,35 +373,20 @@ export function useJezeroPackageLoader(enabled: boolean): JezeroPackageHandle {
           manifestData.thermal.asset,
           'la imagen térmica PNG',
         );
-        const blob = new Blob([pngBytes.slice().buffer], { type: 'image/png' });
-        localUrl = URL.createObjectURL(blob);
-        const { width, height, rgba } = await decodePngRgbaBytes(pngBytes, localUrl);
+        const { width, height, rgba } = await decodePngRgbaDirect(pngBytes);
         const decoded = validateThermalDecodedPixels(manifestData, width, height, rgba);
         if (controller.signal.aborted) {
-          URL.revokeObjectURL(localUrl);
-          localUrl = null;
           return;
         }
-        const prevUrl = objectUrlsRef.current.thermal;
-        objectUrlsRef.current.thermal = localUrl;
-        if (prevUrl && prevUrl !== localUrl) {
-          URL.revokeObjectURL(prevUrl);
-        }
-        const assignedUrl = localUrl;
-        localUrl = null;
         setState((prev) => ({
           ...prev,
           thermal: {
             status: 'ready',
-            data: { decoded, objectUrl: assignedUrl },
+            data: { decoded, objectUrl: '' },
             errorMessage: null,
           },
         }));
       } catch (err) {
-        if (localUrl) {
-          URL.revokeObjectURL(localUrl);
-          localUrl = null;
-        }
         if (controller.signal.aborted) return;
         setState((prev) => ({
           ...prev,
@@ -483,9 +401,6 @@ export function useJezeroPackageLoader(enabled: boolean): JezeroPackageHandle {
 
     return () => {
       controller.abort();
-      if (localUrl) {
-        URL.revokeObjectURL(localUrl);
-      }
     };
   }, [enabled, manifestData, entryUrl, thermalSeq]);
 
@@ -847,6 +762,9 @@ export function useJezeroPackageLoader(enabled: boolean): JezeroPackageHandle {
         const payload: ReadyThermalRef = {
           productId: thermalSource.productId,
           acquisitionContext: `${manifest.thermal.acquisition.kind === 'mosaic' ? 'Mosaico' : manifest.thermal.acquisition.kind} · ${manifest.thermal.acquisition.illumination === 'night' ? 'nocturno' : manifest.thermal.acquisition.illumination}`,
+          acquisitionDatesKnown:
+            manifest.thermal.acquisition.startUtc !== null ||
+            manifest.thermal.acquisition.endUtc !== null,
           acquisitionDetail: describeAcquisitionReason(
             manifest.thermal.acquisition.missingReason,
           ),
@@ -922,7 +840,7 @@ export function useJezeroPackageLoader(enabled: boolean): JezeroPackageHandle {
         };
         return {
           id: 'surface_photo' as const,
-          label: 'Foto (Enchanted Lake)',
+          label: 'Foto contextual (Enchanted Lake)',
           sourceHint: `Perseverance · ${evidenceItem.productId}`,
           requirement: 'required_mvp' as const,
           status: 'ready' as const,
@@ -933,7 +851,7 @@ export function useJezeroPackageLoader(enabled: boolean): JezeroPackageHandle {
       }
       return {
         id: 'surface_photo' as const,
-        label: 'Foto (Enchanted Lake)',
+        label: 'Foto contextual (Enchanted Lake)',
         sourceHint: evidenceItem ? `Perseverance · ${evidenceItem.productId}` : 'Perseverance (JPL)',
         requirement: 'required_mvp' as const,
         status: state.photo.status === 'error' ? ('error' as const) : ('loading' as const),
@@ -1006,6 +924,14 @@ export function useJezeroPackageLoader(enabled: boolean): JezeroPackageHandle {
     };
   }, [state, drapedGeometry, geometryError]);
 
+  const scenarioAuthority: ScenarioConfigAuthority = !enabled
+    ? 'ready'
+    : state.scenario.status === 'ready' && activeBaseline !== undefined
+      ? 'ready'
+      : state.manifest.status === 'error' || state.scenario.status === 'error'
+        ? 'fallback'
+        : 'loading';
+
   return {
     dataPort,
     terrainManifest: state.manifest.data,
@@ -1015,9 +941,10 @@ export function useJezeroPackageLoader(enabled: boolean): JezeroPackageHandle {
     drapedGeometry,
     geometryError,
     activeBaseline: activeBaseline ?? SIMULATED_MISSION_BASELINE,
+    scenarioAuthority,
     scenarioStatus: state.scenario.status,
     scenarioError: state.scenario.errorMessage,
-    usingFallbackTimings: state.scenario.status === 'error',
+    usingFallbackTimings: scenarioAuthority === 'fallback',
     layerRetries,
     retryAll,
     retryScenario,

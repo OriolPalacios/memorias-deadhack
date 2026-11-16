@@ -44,7 +44,7 @@ export interface MissionBaselineConstants {
 export const SIMULATED_MISSION_BASELINE: MissionBaselineConstants = {
   productName: 'DeadHack',
   missionTitle: 'Una parada más',
-  scientificContext: 'Jezero / Enchanted Lake',
+  scientificContext: 'Jezero · parada científica simulada',
   initialBudgetMin: 120,
   reserveMin: 20,
   extraStop: {

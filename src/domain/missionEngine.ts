@@ -430,13 +430,13 @@ export function getMissionPhaseMeta(
         label: 'Trayecto de ida',
         stepCaption: 'Fase 1 · ida simulada',
         guidance:
-          'Esperar o inspeccionar la vista orbital consume 0 min; avanza manualmente al completar la ida.',
+          'Pausar o inspeccionar la vista orbital consume 0 min; la caminata continúa automáticamente hacia observación.',
       };
     case 'observing':
       return {
         label: 'Observación principal',
         stepCaption: 'Fase 2 · estación principal',
-        guidance: `Completa la ventana fija de observación (${obsMin} min) para alcanzar el punto de decisión.`,
+        guidance: `Ventana fija de observación (${obsMin} min) antes de pausar en el punto de decisión.`,
       };
     case 'deciding':
       return {
@@ -449,14 +449,14 @@ export function getMissionPhaseMeta(
       return {
         label: 'Parada extra simulada',
         stepCaption: 'Fase 4A · desvío adicional',
-        guidance: `Trayecto adicional activo (+${extraMin} min). Completa la parada antes de iniciar el regreso.`,
+        guidance: `Desvío adicional en curso (+${extraMin} min); luego continúa automáticamente hacia el regreso.`,
       };
     case 'returning':
       return {
         label: 'Regreso a base',
         stepCaption: 'Fase 4B · retorno simulado',
         guidance:
-          'Completa el tramo de retorno seleccionado para cerrar el balance final frente a la reserva.',
+          'Tramo de retorno seleccionado en curso para cerrar el balance final frente a la reserva.',
       };
     case 'completed':
       return {
